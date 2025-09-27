@@ -1,0 +1,11 @@
+{
+  "name": "ipfs_node",
+  "version": "1.0.0",
+  "private": true,
+  "dependencies": {
+    "@helia/unixfs": "^5.1.0",
+    "blockstore-fs": "^2.0.5",
+    "datastore-fs": "^10.0.6",
+    "helia": "^5.5.1"
+  }
+}
