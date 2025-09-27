@@ -2,9 +2,6 @@
   "name": "dtaci",
   "version": "1.0.0",
   "private": true,
-  "workspaces": [
-    "ipfs_node"
-  ],
   "scripts": {
     "dev": "next dev --turbopack",
     "build": "next build",
