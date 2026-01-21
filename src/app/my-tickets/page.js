@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { Ticket, Calendar, MapPin, QrCode } from 'lucide-react';
 import { formatDate } from '@/lib/utils';
 import { mockEvents } from '@/lib/mockData';
+import Link from 'next/link';
 
 export default function MyTicketsPage() {
     const [purchases, setPurchases] = useState([]);
@@ -33,12 +34,12 @@ export default function MyTicketsPage() {
                     <Ticket size={80} className="mx-auto text-gray-600" />
                     <h1 className="text-3xl font-bold">您還沒有任何票券</h1>
                     <p className="text-gray-400">購買活動票券後，將會顯示在這裡</p>
-                    <a
+                    <Link
                         href="/"
                         className="inline-block mt-6 px-6 py-3 bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors"
                     >
                         瀏覽活動
-                    </a>
+                    </Link>
                 </div>
             </div>
         );
@@ -89,8 +90,8 @@ export default function MyTicketsPage() {
                                     <div
                                         key={ticket.ticketId}
                                         className={`bg-gradient-to-br from-blue-900/30 to-purple-900/30 border rounded-lg p-4 ${ticket.used
-                                                ? 'border-gray-600 opacity-50'
-                                                : 'border-blue-500/50'
+                                            ? 'border-gray-600 opacity-50'
+                                            : 'border-blue-500/50'
                                             }`}
                                     >
                                         <div className="flex items-center justify-between mb-3">
@@ -98,8 +99,8 @@ export default function MyTicketsPage() {
                                                 票券 #{index + 1}
                                             </span>
                                             <span className={`text-xs px-2 py-1 rounded-full ${ticket.used
-                                                    ? 'bg-gray-600 text-gray-300'
-                                                    : 'bg-green-600 text-white'
+                                                ? 'bg-gray-600 text-gray-300'
+                                                : 'bg-green-600 text-white'
                                                 }`}>
                                                 {ticket.used ? '已使用' : '未使用'}
                                             </span>
