@@ -5,10 +5,11 @@ const eventRoutes = new Hono();
 /**
  * @param {import('@/types.js').AppContext} c
  */
-eventRoutes.post('/', async (c) => {
+eventRoutes.get('/', async (c) => {
     const conn = c.get('conn');
+    const result = await conn.raw("SELECT * FROM events");
 
-    return c.json({ message: 'User route root' });
+    return c.json({ message: 'OK', data: result.data });
 });
 
 export default eventRoutes;

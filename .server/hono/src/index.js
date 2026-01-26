@@ -10,7 +10,7 @@ app.use('/*', async (c, next) => {
   let dbNoCache;
 
   db = new DatabaseConnection(
-    "127.0.0.1",
+    "192.168.1.112",
     "de_ticket",
     "root_ticket",
     "password",
