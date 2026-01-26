@@ -1,7 +1,7 @@
 'use client';
 
 import Image from 'next/image';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { mockEvents } from '@/lib/mockData';
 import EventCard from '@/components/EventCard';
 import { Search, Filter } from 'lucide-react';
@@ -21,6 +21,19 @@ export default function Home() {
     const matchesCategory = selectedCategory === '全部' || event.category === selectedCategory;
     return matchesSearch && matchesCategory;
   });
+
+  useEffect(() => {
+    async function fetchEvents() {
+      try {
+        const response = await fetch('/api/v1/events');
+        const data = await response.json();
+        console.log('Fetched events from API:', data);
+      } catch (error) {
+        console.error('Error fetching events:', error);
+      }
+    }
+    fetchEvents();
+  }, []);
 
   return (
     <div className="min-h-screen">

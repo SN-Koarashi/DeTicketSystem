@@ -11,7 +11,15 @@ const nextConfig = {
     },
     trailingSlash: true,
     devIndicators: { position: "top-left" },
-    env: {}
+    env: {},
+    rewrites: async function () {
+        return [
+            {
+                source: '/api/:path*',
+                destination: 'http://localhost:8081/:path*',
+            },
+        ];
+    }
 };
 
 export default nextConfig;
