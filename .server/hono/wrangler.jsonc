@@ -1,0 +1,24 @@
+{
+    "$schema": "node_modules/wrangler/config-schema.json",
+    "name": "hono",
+    "main": "src/index.js",
+    "compatibility_date": "2025-10-11",
+    "compatibility_flags": [
+        "nodejs_compat"
+    ],
+    "vars": {},
+    "observability": {
+        "logs": {
+            "enabled": true,
+            "head_sampling_rate": 1,
+            "invocation_logs": true,
+            "persist": true
+        }
+    },
+    "limits": {
+        "cpu_ms": 10000
+    }
+    // Note: For production, use wrangler secrets for sensitive data:
+    // wrangler secret put DB_PASSWORD
+    // wrangler secret put TURNSTILE_SECRET_KEY
+}

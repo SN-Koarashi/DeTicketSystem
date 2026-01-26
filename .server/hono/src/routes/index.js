@@ -1,8 +1,8 @@
 import { Hono } from 'hono';
-import userRoutes from './user.js';
+import eventRoutes from './event.js';
 
 const routes = new Hono();
 
 // Register route groups
-routes.route('/v1/user', userRoutes);
+routes.route('/v1/event', eventRoutes);
 export default routes;
