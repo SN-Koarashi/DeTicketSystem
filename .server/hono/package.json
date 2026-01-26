@@ -1,0 +1,32 @@
+{
+  "name": "hono",
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev --port 8081",
+    "deploy": "wrangler deploy --minify",
+    "cf-typegen": "wrangler types --env-interface CloudflareBindings"
+  },
+  "dependencies": {
+    "@reown/appkit": "^1.8.14",
+    "@reown/appkit-siwx": "^1.8.14",
+    "bcryptjs": "^2.4.3",
+    "crypto-js": "^4.2.0",
+    "dotenv": "^16.0.0",
+    "file-type": "^21.1.1",
+    "hono": "^4.10.3",
+    "mysql2": "^3.6.0",
+    "nodemailer": "^7.0.7",
+    "otplib": "^12.0.1",
+    "react": "^19.2.0",
+    "react-email": "^4.3.2",
+    "rss-parser": "^3.13.0",
+    "siwe": "^3.0.0"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20251121.0",
+    "@types/node": "^24.9.2",
+    "@types/react": "^19.2.2",
+    "typescript": "^5.9.3",
+    "wrangler": "^4.4.0"
+  }
+}
