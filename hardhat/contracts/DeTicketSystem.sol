@@ -201,9 +201,9 @@ contract DeTicketSystem {
             /* uint80 roundID */ int256 answer,
             ,
             ,
-            /* uint256 startedAt */
-         /* uint80 answeredInRound */) = /* uint256 updatedAt */
-            priceFeed.latestRoundData();
+
+         /* uint256 updatedAt */) = /* uint256 startedAt */
+            /* uint80 answeredInRound */ priceFeed.latestRoundData();
 
         return answer; // 價格有8位小數，例如: 200000000000 = $2000.00
     }
@@ -219,14 +219,16 @@ contract DeTicketSystem {
         int256 ethPriceUSD = getLatestETHPrice(); // 8位小數
         require(ethPriceUSD > 0, "Invalid ETH price");
 
-        // ticketPriceUSD 單位是 cents (2位小數)
-        // ethPriceUSD 單位是 8位小數
+        // ticketPriceUSD 單位是 cents (需要除以100變成USD)
+        // ethPriceUSD 單位是 8位小數 (需要除以10^8變成USD)
         // 需要轉換為 wei (18位小數)
 
-        // requiredETH = (ticketPriceUSD * 10^18) / (ethPriceUSD * 10^2)
-        // 簡化: requiredETH = (ticketPriceUSD * 10^16) / ethPriceUSD
+        // 公式推導:
+        // requiredETH (wei) = (ticketPriceUSD_cents / 100) / (ethPriceUSD_8decimals / 10^8) * 10^18
+        //                   = ticketPriceUSD_cents * 10^8 * 10^18 / (ethPriceUSD_8decimals * 100)
+        //                   = ticketPriceUSD_cents * 10^24 / ethPriceUSD_8decimals
 
-        requiredETH = (ticketPriceUSD * 1e16) / uint256(ethPriceUSD);
+        requiredETH = (ticketPriceUSD * 1e24) / uint256(ethPriceUSD);
 
         return requiredETH;
     }

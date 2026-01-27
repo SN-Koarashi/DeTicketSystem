@@ -156,6 +156,7 @@ UI 與使用者流程錯了，後面全部白做
 2. [X] 送出活動後，簽名的地址即為主辦方(活動上鏈後不可更改)
 3. [X] 將活動完整資訊儲存到IPFS，IPFS回傳CID。將CID及活動摘要存入傳統資料庫(hono)
 4. [ ] 將CID、活動資訊的HASH及主辦者address，透過 Ethereum Sepolia 智慧合約 上鏈，合約回傳該「活動識別碼(將CID、活動資訊的HASH及主辦者address作hash)」
+ - 價格資訊應為美分，即要乘上100
 5. [ ] 回傳該活動的網頁 QR Code。QR Code內含活動識別碼、CID
 6. [ ] 合約也存 mapping 活動識別碼 → 主辦者 address
 
