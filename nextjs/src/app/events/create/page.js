@@ -181,11 +181,55 @@ export default function CreateEventPage() {
         await new Promise(resolve => setTimeout(resolve, 500));
     };
 
-    // 智慧合約互動 (Mock)
+    // 智慧合約互動
     const interactWithContract = async (cid, dataHash, organizerAddress, maxTicketSupply, ticketPriceUSD) => {
-        await new Promise(resolve => setTimeout(resolve, 20000));
-        const eventId = await calculateHash({ cid, dataHash, organizerAddress });
-        return { eventId };
+        const { BrowserProvider, Contract } = await import('ethers');
+
+        // 從環境變數取得智慧合約地址
+        const contractAddress = process.env.NEXT_PUBLIC_SMART_CONTRACT_ADDRESS;
+
+        // 智慧合約 ABI（只包含需要的 createEvent 函數）
+        const contractABI = [
+            {
+                "inputs": [
+                    { "internalType": "string", "name": "cid", "type": "string" },
+                    { "internalType": "bytes32", "name": "contentHash", "type": "bytes32" },
+                    { "internalType": "address", "name": "organizer", "type": "address" },
+                    { "internalType": "uint256", "name": "maxTicketSupply", "type": "uint256" },
+                    { "internalType": "uint256", "name": "ticketPriceUSD", "type": "uint256" }
+                ],
+                "name": "createEvent",
+                "outputs": [
+                    { "internalType": "bytes32", "name": "eventId", "type": "bytes32" }
+                ],
+                "stateMutability": "nonpayable",
+                "type": "function"
+            }
+        ];
+
+        // 獲取 provider 和 signer
+        const provider = new BrowserProvider(window.ethereum);
+        const signer = await provider.getSigner();
+
+        // 創建合約實例
+        const contract = new Contract(contractAddress, contractABI, signer);
+
+        // 調用 createEvent 函數
+        const tx = await contract.createEvent(
+            cid,
+            dataHash,
+            organizerAddress,
+            maxTicketSupply,
+            ticketPriceUSD
+        );
+
+        // 等待交易確認
+        const receipt = await tx.wait();
+
+        // 從事件日誌中取得 eventId
+        const eventId = receipt.logs[0].topics[1];
+
+        return { eventId, txHash: receipt.hash };
     };
 
     // 提交表單
