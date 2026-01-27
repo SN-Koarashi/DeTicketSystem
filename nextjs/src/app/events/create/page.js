@@ -20,10 +20,11 @@ export default function CreateEventPage() {
         date: '',
         time: '',
         location: '',
-        price: '',
+        priceCent: '',
         totalTickets: '',
         image: ''
     });
+
 
     // 提交狀態
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -64,7 +65,7 @@ export default function CreateEventPage() {
 
     // 驗證表單
     const validateForm = () => {
-        const required = ['name', 'description', 'date', 'time', 'location', 'price', 'totalTickets'];
+        const required = ['name', 'description', 'date', 'time', 'location', 'priceCent', 'totalTickets'];
         for (const field of required) {
             if (!formData[field]) {
                 alert(`請填寫 ${getFieldLabel(field)}`);
@@ -72,7 +73,7 @@ export default function CreateEventPage() {
             }
         }
 
-        if (parseFloat(formData.price) <= 0) {
+        if (parseInt(formData.priceCent) <= 0) {
             alert('票價必須大於 0');
             return false;
         }
@@ -93,7 +94,7 @@ export default function CreateEventPage() {
             date: '活動日期',
             time: '活動時間',
             location: '活動地點',
-            price: '票價',
+            priceCent: '票價',
             totalTickets: '票券數量'
         };
         return labels[field] || field;
@@ -204,7 +205,7 @@ export default function CreateEventPage() {
                 description: formData.description.substring(0, 60) + '...',
                 date: formData.date,
                 location: formData.location,
-                price: formData.price,
+                priceCent: formData.priceCent,
                 image: formData.image
             };
             await uploadToDatabase(cid, summary);

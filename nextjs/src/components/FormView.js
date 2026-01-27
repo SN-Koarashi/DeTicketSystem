@@ -186,17 +186,17 @@ export default function FormView({
                         {/* 票價 */}
                         <div>
                             <label className="block text-sm font-medium mb-2">
-                                票價 (USD) <span className="text-red-400">*</span>
+                                票價 (¢ Cent) <span className="text-red-400">*</span>
                             </label>
                             <div className="relative">
                                 <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" size={20} />
                                 <input
                                     type="number"
-                                    name="price"
-                                    value={formData.price}
+                                    name="priceCent"
+                                    value={formData.priceCent}
                                     onChange={handleInputChange}
                                     placeholder="1"
-                                    step="0.1"
+                                    step="1"
                                     min="0"
                                     className="w-full pl-12 pr-4 py-3 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:border-blue-500 transition-colors"
                                     disabled={!isConnected || chain?.id !== 11155111}
