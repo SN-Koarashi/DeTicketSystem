@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react';
 import { useAccount } from 'wagmi';
 import { useRouter, useParams } from 'next/navigation';
 import Image from 'next/image';
-import { mockEvents } from '@/lib/mockData';
 import { calculateABIHash, calculateHash, categories, formatDate, getRemainingTickets, isEventSoldOut } from '@/lib/utils';
 import { Calendar, MapPin, Users, Tag, ArrowLeft, ShoppingCart, CheckCircle } from 'lucide-react';
 

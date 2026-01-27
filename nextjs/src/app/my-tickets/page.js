@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react';
 import { useAccount } from 'wagmi';
 import { Ticket, Calendar, MapPin, QrCode } from 'lucide-react';
 import { formatDate } from '@/lib/utils';
-import { mockEvents } from '@/lib/mockData';
 import Link from 'next/link';
 import QRCode from "react-qr-code";
 
@@ -23,8 +22,7 @@ export default function MyTicketsPage() {
 
             // 合併活動資訊
             const purchasesWithEvents = savedPurchases.map(purchase => {
-                const event = mockEvents.find(e => e.id === purchase.eventId);
-                return { ...purchase, event };
+                return { ...purchase };
             });
 
             setPurchases(purchasesWithEvents);
