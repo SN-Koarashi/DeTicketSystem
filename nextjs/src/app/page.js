@@ -2,23 +2,22 @@
 
 import Image from 'next/image';
 import { useEffect, useState } from 'react';
-import { mockEvents } from '@/lib/mockData';
 import EventCard from '@/components/EventCard';
 import { Search, Filter } from 'lucide-react';
+import { categories } from '@/lib/utils';
 
 export default function Home() {
-  const [events] = useState(mockEvents);
+  const [events, setEvents] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('全部');
+  const [selectedCategory, setSelectedCategory] = useState('all');
 
-  // 分類列表
-  const categories = ['全部', ...new Set(events.map(e => e.category))];
 
   // 過濾活動
   const filteredEvents = events.filter(event => {
-    const matchesSearch = event.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      event.description.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCategory = selectedCategory === '全部' || event.category === selectedCategory;
+    const data = JSON.parse(event.summary);
+    const matchesSearch = data.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      data.description.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesCategory = selectedCategory === 'all' || data.category === selectedCategory;
     return matchesSearch && matchesCategory;
   });
 
@@ -27,6 +26,9 @@ export default function Home() {
       try {
         const response = await fetch('/api/v1/events');
         const data = await response.json();
+
+        setEvents(data?.data);
+
         console.log('Fetched events from API:', data);
       } catch (error) {
         console.error('Error fetching events:', error);
@@ -67,16 +69,16 @@ export default function Home() {
       <section className="container mx-auto px-4 py-8">
         <div className="flex items-center gap-4 overflow-x-auto pb-2">
           <Filter size={20} className="text-gray-400 flex-shrink-0" />
-          {categories.map(category => (
+          {Object.entries(categories).map(([key, label]) => (
             <button
-              key={category}
-              onClick={() => setSelectedCategory(category)}
-              className={`px-4 py-2 rounded-lg font-medium transition-colors flex-shrink-0 ${selectedCategory === category
+              key={key}
+              onClick={() => setSelectedCategory(key)}
+              className={`px-4 py-2 rounded-lg font-medium transition-colors flex-shrink-0 ${selectedCategory === key
                 ? 'bg-blue-600 text-white'
                 : 'bg-white/5 text-gray-300 hover:bg-white/10'
                 }`}
             >
-              {category}
+              {label}
             </button>
           ))}
         </div>

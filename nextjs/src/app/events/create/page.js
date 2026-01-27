@@ -286,7 +286,8 @@ export default function CreateEventPage() {
                 date: formData.date,
                 location: formData.location,
                 priceCent: formData.priceCent,
-                image: formData.image
+                image: formData.image,
+                category: formData.category
             };
             await uploadToDatabase(cid, summary);
 

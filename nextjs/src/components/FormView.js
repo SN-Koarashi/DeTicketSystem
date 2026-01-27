@@ -186,7 +186,7 @@ export default function FormView({
                         {/* 票價 */}
                         <div>
                             <label className="block text-sm font-medium mb-2">
-                                票價 (¢ Cent) <span className="text-red-400">*</span>
+                                票價 (¢ Cents) <span className="text-red-400">*</span>
                             </label>
                             <div className="relative">
                                 <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" size={20} />

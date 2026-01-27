@@ -51,3 +51,12 @@ export function isEventExpired(event) {
     const eventDate = new Date(`${event.date} ${event.time}`);
     return eventDate < new Date();
 }
+
+export const categories = {
+    all: '全部',
+    music: '音樂',
+    education: '教育',
+    art: '藝術',
+    business: '商業',
+    other: '其他'
+};
