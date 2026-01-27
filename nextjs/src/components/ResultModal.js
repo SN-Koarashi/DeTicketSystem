@@ -1,5 +1,7 @@
 import { CheckCircle } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import QRCode from "react-qr-code";
+
 export default function Modal({
     eventData
 }) {
@@ -9,9 +11,9 @@ export default function Modal({
 
     return (
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50">
-            <div className="bg-gray-900 p-8 rounded-2xl max-w-2xl w-full mx-4 border border-gray-700">
-                <div className="text-center mb-6">
-                    <CheckCircle className="w-16 h-16 text-green-400 mx-auto mb-4" />
+            <div className="bg-gray-900 p-6 rounded-2xl max-w-2xl w-full mx-4 border border-gray-700">
+                <div className="text-center mb-4 flex flex-row items-center gap-4 justify-center">
+                    <CheckCircle className="w-16 h-16 text-green-400" />
                     <h3 className="text-3xl font-bold text-green-400">活動建立成功</h3>
                 </div>
 
@@ -39,21 +41,24 @@ export default function Modal({
 
                     <div className="pt-4 border-t border-gray-700">
                         <label className="text-sm text-gray-400 mb-2 block">活動 QR Code 資料</label>
-                        <div className="bg-white p-6 rounded-lg w-[160px] mx-auto">
+                        <div className="bg-white p-2 rounded-lg w-[212px] mx-auto">
                             <div className="aspect-square bg-gray-200 flex items-center justify-center text-gray-600 text-sm">
-                                QR Code 預覽<br />
-                                (Phase 2 實作)
+                                <QRCode
+                                    value={location.origin + '/events/' + eventData.cid}
+                                    size={200}
+                                    level="H"
+                                />
                             </div>
                         </div>
                         <p className="text-xs text-gray-500 mt-2 text-center">
-                            內含: 活動識別碼、CID
+                            {location.origin + '/events/' + eventData.cid}
                         </p>
                     </div>
                 </div>
 
                 <div className="flex gap-3">
                     <button
-                        onClick={() => router.push('/events/' + eventData.eventId)}
+                        onClick={() => router.push('/events/' + eventData.cid)}
                         className="flex-1 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors cursor-pointer"
                     >
                         查看活動
