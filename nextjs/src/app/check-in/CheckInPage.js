@@ -2,14 +2,13 @@
 
 import { useState, useEffect } from 'react';
 import { useAccount } from 'wagmi';
-import { Camera, CheckCircle, XCircle, QrCode, Scan, Wallet } from 'lucide-react';
+import { CheckCircle, XCircle, QrCode, Wallet } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
 
 export default function CheckInPage() {
     const searchParams = useSearchParams();
     const paymentId = searchParams.get('paymentId') || '';
     const { address, isConnected } = useAccount();
-    const [scanning, setScanning] = useState(false);
     const [checkInResult, setCheckInResult] = useState(null);
     const [checkInHistory, setCheckInHistory] = useState([]);
     const [ticketIdInput, setTicketIdInput] = useState(paymentId);
@@ -172,38 +171,6 @@ export default function CheckInPage() {
             console.error('驗票錯誤:', err);
             handleVerifyError(err.message);
         }
-    };
-
-    // 模擬掃描 QR Code（實際應使用相機 API）
-    const handleScan = () => {
-        setScanning(true);
-
-        // 模擬掃描過程（實際應使用 QR code 掃描庫）
-        setTimeout(() => {
-            // 從 localStorage 獲取購買記錄來模擬掃描到票券
-            const purchases = JSON.parse(localStorage.getItem('purchases') || '[]');
-
-            if (purchases.length === 0) {
-                alert('沒有找到票券記錄（演示用）');
-                setScanning(false);
-                return;
-            }
-
-            // 找到第一張票券的 ticketId
-            let foundTicketId = null;
-            for (const purchase of purchases) {
-                if (purchase.tickets && purchase.tickets.length > 0) {
-                    foundTicketId = purchase.tickets[0].ticketId;
-                    break;
-                }
-            }
-
-            if (foundTicketId) {
-                setTicketIdInput(foundTicketId);
-            }
-
-            setScanning(false);
-        }, 1500);
     };
 
     return (
