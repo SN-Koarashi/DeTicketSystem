@@ -35,6 +35,28 @@ export default function CheckInPage() {
         localStorage.setItem('checkInHistory', JSON.stringify(newHistory));
         setCheckInHistory(newHistory);
 
+        // 更新本地票券記錄為已使用
+        const purchases = JSON.parse(localStorage.getItem('purchases') || '[]');
+        let ticketFound = false;
+        const updatedPurchases = purchases.map(purchase => {
+            if (purchase.tickets && purchase.tickets.length > 0) {
+                const updatedTickets = purchase.tickets.map(ticket => {
+                    if (ticket.ticketId === ticketId) {
+                        ticketFound = true;
+                        return { ...ticket, used: true, usedAt: new Date().toISOString() };
+                    }
+                    return ticket;
+                });
+                return { ...purchase, tickets: updatedTickets };
+            }
+            return purchase;
+        });
+
+        if (ticketFound) {
+            localStorage.setItem('purchases', JSON.stringify(updatedPurchases));
+            console.log('票券已標記為已使用');
+        }
+
         setCheckInResult({
             success: true,
             message: '驗票成功！票券已核銷',
@@ -124,6 +146,14 @@ export default function CheckInPage() {
 
             // 創建合約實例
             const contract = new Contract(contractAddress, contractABI, signer);
+
+            // 先使用 callStatic 檢查驗票結果（不實際發送交易）
+            const canVerify = await contract.verifyTicket.staticCall(ticketIdInput.trim());
+            console.log('驗票檢查結果:', canVerify);
+
+            if (!canVerify) {
+                throw new Error('驗票失敗：票券可能已被使用或不存在');
+            }
 
             // 調用 verifyTicket 函數
             const tx = await contract.verifyTicket(ticketIdInput.trim());
@@ -285,7 +315,7 @@ export default function CheckInPage() {
                                     </div>
                                 )}
                                 {checkInResult.error && (
-                                    <p className="text-xs text-red-300 mt-2 opacity-70">
+                                    <p className="text-xs text-red-300 mt-2 opacity-70 break-all">
                                         {checkInResult.error}
                                     </p>
                                 )}
