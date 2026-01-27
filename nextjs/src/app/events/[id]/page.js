@@ -165,10 +165,10 @@ export default function EventDetailPage() {
             // 步驟 8: 購票成功
             setPurchaseComplete(true);
 
-            // 3秒後導向「我的票券」頁面
+            // 1.5秒後導向「我的票券」頁面
             setTimeout(() => {
                 router.push('/my-tickets');
-            }, 3000);
+            }, 1500);
 
         } catch (error) {
             console.error('購票失敗:', error);

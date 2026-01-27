@@ -6,6 +6,7 @@ import { Ticket, Calendar, MapPin, QrCode } from 'lucide-react';
 import { formatDate } from '@/lib/utils';
 import { mockEvents } from '@/lib/mockData';
 import Link from 'next/link';
+import QRCode from "react-qr-code";
 
 export default function MyTicketsPage() {
     const { address, isConnected } = useAccount();
@@ -134,7 +135,7 @@ export default function MyTicketsPage() {
                                         {!ticket.used && (
                                             <button
                                                 onClick={() => showQRCode(ticket, purchase)}
-                                                className="w-full py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2"
+                                                className="w-full py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2 cursor-pointer"
                                             >
                                                 <QrCode size={16} />
                                                 <span>顯示 QR Code</span>
@@ -173,11 +174,15 @@ export default function MyTicketsPage() {
                         {/* QR Code 佔位（實際需要 QR Code 生成庫） */}
                         <div className="bg-white p-8 rounded-lg mb-4">
                             <div className="aspect-square bg-gray-200 rounded-lg flex items-center justify-center">
-                                <QrCode size={200} className="text-gray-400" />
+                                <QRCode
+                                    value={location.origin + '/check-in/' + selectedTicket.ticket.ticketId}
+                                    size={300}
+                                    level="H"
+                                />
                             </div>
                         </div>
 
-                        <div className="space-y-2 text-sm text-gray-400 mb-6">
+                        <div className="space-y-2 text-sm text-gray-400 mb-6 break-all">
                             <p>票券 ID: {selectedTicket.ticket.ticketId}</p>
                             <p className="text-center text-xs">
                                 請在活動現場出示此 QR Code 進行簽到
@@ -186,7 +191,7 @@ export default function MyTicketsPage() {
 
                         <button
                             onClick={() => setSelectedTicket(null)}
-                            className="w-full py-3 bg-gray-700 hover:bg-gray-600 rounded-lg transition-colors"
+                            className="w-full py-3 bg-gray-700 hover:bg-gray-600 rounded-lg transition-colors cursor-pointer"
                         >
                             關閉
                         </button>
