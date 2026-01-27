@@ -29,6 +29,9 @@ contract DeTicketSystem {
     // 付款識別碼 => 使用時間戳 (0表示未使用)
     mapping(bytes32 => uint256) public ticketUsageTimestamp;
 
+    // 付款識別碼 => 購買者地址
+    mapping(bytes32 => address) public ticketOwner;
+
     // 事件
     event EventCreated(
         bytes32 indexed eventId,
@@ -157,6 +160,9 @@ contract DeTicketSystem {
         // 初始化付款識別碼的時間戳為0 (未使用)
         ticketUsageTimestamp[paymentId] = 0;
 
+        // 記錄票券擁有者
+        ticketOwner[paymentId] = msg.sender;
+
         emit TicketPurchased(paymentId, eventId, msg.sender, msg.value);
 
         // 退還多餘的款項
@@ -176,6 +182,12 @@ contract DeTicketSystem {
      * @return success 驗票是否成功
      */
     function verifyTicket(bytes32 paymentId) external returns (bool success) {
+        // 檢查調用者是否為票券擁有者
+        require(
+            ticketOwner[paymentId] == msg.sender,
+            "Only ticket owner can verify"
+        );
+
         // 檢查付款識別碼的時間戳
         uint256 timestamp = ticketUsageTimestamp[paymentId];
 
@@ -202,8 +214,8 @@ contract DeTicketSystem {
             ,
             ,
 
-         /* uint256 updatedAt */) = /* uint256 startedAt */
-            /* uint80 answeredInRound */ priceFeed.latestRoundData();
+         /* uint256 startedAt */) = /* uint256 updatedAt */ /* uint80 answeredInRound */ priceFeed
+                .latestRoundData();
 
         return answer; // 價格有8位小數，例如: 200000000000 = $2000.00
     }
