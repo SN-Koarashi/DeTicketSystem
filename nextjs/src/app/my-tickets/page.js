@@ -1,31 +1,52 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useAccount } from 'wagmi';
 import { Ticket, Calendar, MapPin, QrCode } from 'lucide-react';
 import { formatDate } from '@/lib/utils';
 import { mockEvents } from '@/lib/mockData';
 import Link from 'next/link';
 
 export default function MyTicketsPage() {
+    const { address, isConnected } = useAccount();
     const [purchases, setPurchases] = useState([]);
     const [selectedTicket, setSelectedTicket] = useState(null);
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        // 從 localStorage 讀取購買記錄
-        const savedPurchases = JSON.parse(localStorage.getItem('mockPurchases') || '[]');
+        async function loadPurchases() {
+            setLoading(true);
 
-        // 合併活動資訊
-        const purchasesWithEvents = savedPurchases.map(purchase => {
-            const event = mockEvents.find(e => e.id === purchase.eventId);
-            return { ...purchase, event };
-        });
+            // 方法1: 從 localStorage 讀取購買記錄 (當前實作)
+            const savedPurchases = JSON.parse(localStorage.getItem('purchases') || '[]');
 
-        setPurchases(purchasesWithEvents);
-    }, []);
+            // 合併活動資訊
+            const purchasesWithEvents = savedPurchases.map(purchase => {
+                const event = mockEvents.find(e => e.id === purchase.eventId);
+                return { ...purchase, event };
+            });
+
+            setPurchases(purchasesWithEvents);
+            setLoading(false);
+        }
+
+        loadPurchases();
+    }, [address, isConnected]);
 
     const showQRCode = (ticket, purchase) => {
         setSelectedTicket({ ticket, purchase });
     };
+
+    if (loading) {
+        return (
+            <div className="container mx-auto px-4 py-20">
+                <div className="text-center">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto"></div>
+                    <p className="mt-4 text-gray-400">載入中...</p>
+                </div>
+            </div>
+        );
+    }
 
     if (purchases.length === 0) {
         return (

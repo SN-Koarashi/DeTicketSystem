@@ -135,7 +135,34 @@ export default function EventDetailPage() {
             const paymentId = receipt.logs[0].topics[1];
             console.log('Payment ID:', paymentId);
 
-            // 步驟 7: 購票成功
+            // 步驟 7: 儲存購票記錄到 localStorage
+            const purchaseRecord = {
+                id: Date.now().toString(),
+                eventId: event.id,
+                eventName: event.name,
+                paymentId: paymentId,
+                transactionHash: receipt.hash,
+                quantity: quantity,
+                totalPrice: (parseInt(event.priceCent) / 100).toFixed(2) + ' USD',
+                purchaseDate: new Date().toISOString(),
+                tickets: [
+                    {
+                        ticketId: paymentId, // 使用 paymentId 作為票券ID
+                        used: false,
+                        eventId: event.id,
+                        buyerAddress: address,
+                        nonce: ticketNonce,
+                        eventIdHash: eventId
+                    }
+                ]
+            };
+
+            // 讀取現有購買記錄
+            const existingPurchases = JSON.parse(localStorage.getItem('purchases') || '[]');
+            existingPurchases.push(purchaseRecord);
+            localStorage.setItem('purchases', JSON.stringify(existingPurchases));
+
+            // 步驟 8: 購票成功
             setPurchaseComplete(true);
 
             // 3秒後導向「我的票券」頁面
