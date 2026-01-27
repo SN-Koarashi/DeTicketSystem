@@ -215,7 +215,13 @@ export default function CheckInPage() {
                 <div className="bg-gradient-to-br from-blue-900/30 to-purple-900/30 backdrop-blur-sm border border-white/10 rounded-xl p-8 mb-8">
                     <div className="space-y-6">
                         {/* 掃描器模擬 */}
-                        <div className="bg-black rounded-xl overflow-hidden">
+                        <div className="rounded-xl overflow-hidden">
+                            <div className="text-center space-y-4">
+                                <QrCode size={120} className="mx-auto text-gray-600" />
+                                <p className="text-gray-400">請掃描 QR Code 開啟此頁面</p>
+                            </div>
+                        </div>
+                        {/* <div className="bg-black rounded-xl overflow-hidden">
                             <div className="aspect-video flex items-center justify-center relative">
                                 {scanning ? (
                                     <div className="absolute inset-0 flex items-center justify-center">
@@ -231,10 +237,10 @@ export default function CheckInPage() {
                                     </div>
                                 )}
                             </div>
-                        </div>
+                        </div> */}
 
                         {/* 掃描按鈕 */}
-                        <button
+                        {/* <button
                             onClick={handleScan}
                             disabled={scanning || !isConnected || paymentId.length > 0}
                             className={`w-full py-4 rounded-lg font-bold text-lg transition-all flex items-center justify-center gap-3 ${scanning || !isConnected || paymentId.length > 0
@@ -244,7 +250,7 @@ export default function CheckInPage() {
                         >
                             <Scan size={24} />
                             <span>{scanning ? '掃描中...' : '開始掃描 QR Code'}</span>
-                        </button>
+                        </button> */}
 
                         {/* 手動輸入 */}
                         <div className="pt-6 border-t border-white/10">
