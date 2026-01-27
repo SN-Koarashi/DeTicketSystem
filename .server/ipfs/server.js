@@ -1,16 +1,16 @@
-import express from 'express';
-import cors from 'cors';
+import { Hono } from 'hono';
+import { serve } from '@hono/node-server';
+import { cors } from 'hono/cors';
 import { createHelia } from 'helia';
 import { unixfs } from '@helia/unixfs';
 import { FsBlockstore } from 'blockstore-fs';
 import { FsDatastore } from 'datastore-fs';
 
-const app = express();
+const app = new Hono();
 const PORT = process.env.PORT || 3001;
 
 // Middleware
-app.use(cors());
-app.use(express.json());
+app.use('/*', cors());
 
 // 初始化 Helia 節點
 let helia;
@@ -38,8 +38,8 @@ async function initHelia() {
 }
 
 // 健康檢查端點
-app.get('/health', (req, res) => {
-    res.json({
+app.get('/health', (c) => {
+    return c.json({
         status: 'ok',
         service: 'IPFS Server',
         peerId: helia?.libp2p.peerId.toString() || 'not initialized'
@@ -47,15 +47,15 @@ app.get('/health', (req, res) => {
 });
 
 // 上傳 JSON 數據到 IPFS
-app.post('/upload', async (req, res) => {
+app.post('/upload', async (c) => {
     try {
-        const jsonData = req.body;
+        const jsonData = await c.req.json();
 
         // 驗證輸入
         if (!jsonData || typeof jsonData !== 'object') {
-            return res.status(400).json({
+            return c.json({
                 error: '無效的輸入格式，需要 JSON 物件'
-            });
+            }, 400);
         }
 
         // 將 JSON 轉換為字串
@@ -68,29 +68,29 @@ app.post('/upload', async (req, res) => {
 
         console.log('✅ 數據已上傳到 IPFS，CID:', cid.toString());
 
-        res.json({
+        return c.json({
             success: true,
             cid: cid.toString(),
             size: bytes.length
         });
     } catch (error) {
         console.error('❌ 上傳失敗:', error);
-        res.status(500).json({
+        return c.json({
             error: '上傳失敗',
             message: error.message
-        });
+        }, 500);
     }
 });
 
 // 從 IPFS 獲取數據
-app.get('/data/:cid', async (req, res) => {
+app.get('/data/:cid', async (c) => {
     try {
-        const { cid } = req.params;
+        const cid = c.req.param('cid');
 
         if (!cid) {
-            return res.status(400).json({
+            return c.json({
                 error: '缺少 CID 參數'
-            });
+            }, 400);
         }
 
         // 從 IPFS 讀取數據
@@ -106,7 +106,7 @@ app.get('/data/:cid', async (req, res) => {
 
         console.log('✅ 數據已從 IPFS 獲取，CID:', cid);
 
-        res.json({
+        return c.json({
             success: true,
             cid: cid,
             data: jsonData
@@ -115,16 +115,16 @@ app.get('/data/:cid', async (req, res) => {
         console.error('❌ 獲取失敗:', error);
 
         if (error.message.includes('no block')) {
-            return res.status(404).json({
+            return c.json({
                 error: '找不到指定的 CID',
                 message: '該 CID 不存在或尚未同步'
-            });
+            }, 404);
         }
 
-        res.status(500).json({
+        return c.json({
             error: '獲取失敗',
             message: error.message
-        });
+        }, 500);
     }
 });
 
@@ -132,13 +132,16 @@ app.get('/data/:cid', async (req, res) => {
 async function startServer() {
     await initHelia();
 
-    app.listen(PORT, () => {
-        console.log(`🚀 IPFS 伺服器運行在 http://localhost:${PORT}`);
-        console.log(`📝 API 端點:`);
-        console.log(`   - POST   /upload      - 上傳 JSON 數據`);
-        console.log(`   - GET    /data/:cid   - 獲取數據`);
-        console.log(`   - GET    /health      - 健康檢查`);
+    serve({
+        fetch: app.fetch,
+        port: PORT,
     });
+
+    console.log(`🚀 IPFS 伺服器運行在 http://localhost:${PORT}`);
+    console.log(`📝 API 端點:`);
+    console.log(`   - POST   /upload      - 上傳 JSON 數據`);
+    console.log(`   - GET    /data/:cid   - 獲取數據`);
+    console.log(`   - GET    /health      - 健康檢查`);
 }
 
 // 優雅關閉
