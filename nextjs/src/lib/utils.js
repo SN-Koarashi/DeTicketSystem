@@ -1,4 +1,4 @@
-// 工具函數
+import { ethers } from "ethers";
 
 // 格式化日期
 export function formatDate(dateString) {
@@ -51,6 +51,25 @@ export function isEventExpired(event) {
     const eventDate = new Date(`${event.date} ${event.time}`);
     return eventDate < new Date();
 }
+
+// 計算 keccak256 hash (使用真實實作)
+export const calculateHash = async (data) => {
+    const { keccak256, toUtf8Bytes } = ethers;
+    return keccak256(toUtf8Bytes(JSON.stringify(data)));
+};
+
+export const calculateABIHash = async (cid, contentHash, organizer) => {
+    // 對應 Solidity 的 abi.encodePacked
+    const packed = ethers.utils.solidityPack(
+        ["string", "bytes32", "address"],
+        [cid, contentHash, organizer]
+    );
+
+    // 計算 keccak256
+    const eventId = ethers.utils.keccak256(packed);
+
+    return eventId;
+};
 
 export const categories = {
     all: '全部',

@@ -5,7 +5,7 @@ import { useAccount } from 'wagmi';
 import { useRouter, useParams } from 'next/navigation';
 import Image from 'next/image';
 import { mockEvents } from '@/lib/mockData';
-import { formatDate, getRemainingTickets, isEventSoldOut } from '@/lib/utils';
+import { calculateABIHash, calculateHash, formatDate, getRemainingTickets, isEventSoldOut } from '@/lib/utils';
 import { Calendar, MapPin, Users, Tag, ArrowLeft, ShoppingCart, CheckCircle } from 'lucide-react';
 
 export default function EventDetailPage() {
@@ -13,6 +13,7 @@ export default function EventDetailPage() {
     const router = useRouter();
     const { address, isConnected } = useAccount();
     const [event, setEvent] = useState(null);
+    const [ipfsData, setIpfsData] = useState(null);
     const [quantity, setQuantity] = useState(1);
     const [isPurchasing, setIsPurchasing] = useState(false);
     const [purchaseComplete, setPurchaseComplete] = useState(false);
@@ -37,6 +38,8 @@ export default function EventDetailPage() {
                         ...data.data,
                         id: params.id
                     });
+
+                    setIpfsData(data.data);
                 }
             });
         }
@@ -60,33 +63,13 @@ export default function EventDetailPage() {
 
         setIsPurchasing(true);
 
-        // 模擬購買流程
-        setTimeout(() => {
-            setIsPurchasing(false);
-            setPurchaseComplete(true);
+        const cid = event.id;
+        const dataHash = await calculateHash(ipfsData);
+        const organizer = ipfsData.organizer;
 
-            // 儲存購買記錄到 localStorage
-            const purchases = JSON.parse(localStorage.getItem('mockPurchases') || '[]');
-            const newPurchase = {
-                id: Date.now().toString(),
-                eventId: event.id,
-                eventName: event.name,
-                quantity,
-                totalPrice,
-                purchaseDate: new Date().toISOString(),
-                tickets: Array.from({ length: quantity }, (_, i) => ({
-                    ticketId: `TICKET-${Date.now()}-${i}`,
-                    used: false
-                }))
-            };
-            purchases.push(newPurchase);
-            localStorage.setItem('mockPurchases', JSON.stringify(purchases));
+        const eventId = await calculateABIHash(cid, dataHash, organizer);
 
-            // 3 秒後導向我的票券頁
-            setTimeout(() => {
-                router.push('/my-tickets');
-            }, 3000);
-        }, 2000);
+
     };
 
     if (purchaseComplete) {
