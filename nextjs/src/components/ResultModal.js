@@ -39,7 +39,7 @@ export default function Modal({
 
                     <div className="pt-4 border-t border-gray-700">
                         <label className="text-sm text-gray-400 mb-2 block">活動 QR Code 資料</label>
-                        <div className="bg-white p-6 rounded-lg">
+                        <div className="bg-white p-6 rounded-lg w-[160px]">
                             <div className="aspect-square bg-gray-200 flex items-center justify-center text-gray-600 text-sm">
                                 QR Code 預覽<br />
                                 (Phase 2 實作)
@@ -54,18 +54,18 @@ export default function Modal({
                 <div className="flex gap-3">
                     <button
                         onClick={() => router.push('/events/' + eventData.eventId)}
-                        className="flex-1 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors"
+                        className="flex-1 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors cursor-pointer"
                     >
                         查看活動
                     </button>
                     <button
                         onClick={() => router.push('/')}
-                        className="flex-1 px-6 py-3 bg-gray-700 hover:bg-gray-600 text-white rounded-lg font-medium transition-colors"
+                        className="flex-1 px-6 py-3 bg-gray-700 hover:bg-gray-600 text-white rounded-lg font-medium transition-colors cursor-pointer"
                     >
                         返回首頁
                     </button>
                 </div>
             </div>
-        </div>
+        </div >
     );
 }
