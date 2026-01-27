@@ -17,6 +17,7 @@ export default function EventDetailPage() {
     const [quantity, setQuantity] = useState(1);
     const [isPurchasing, setIsPurchasing] = useState(false);
     const [purchaseComplete, setPurchaseComplete] = useState(false);
+    const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
         if (params.id) {
@@ -41,9 +42,62 @@ export default function EventDetailPage() {
 
                     setIpfsData(data.data);
                 }
+            }).finally(() => {
+                setIsLoading(false);
             });
         }
     }, [params.id]);
+
+    // Loading skeleton
+    if (isLoading) {
+        return (
+            <div className="min-h-screen">
+                <div className="container mx-auto px-4 py-6">
+                    <div className="h-6 bg-white/10 rounded w-32 animate-pulse"></div>
+                </div>
+                <div className="container mx-auto px-4 pb-20">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                        {/* 左側骨架屏 */}
+                        <div className="space-y-6">
+                            <div className="relative h-96 bg-white/10 rounded-xl animate-pulse"></div>
+                            <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl p-6 space-y-4">
+                                <div className="h-8 bg-white/10 rounded w-3/4 animate-pulse"></div>
+                                <div className="h-6 bg-white/10 rounded w-24 animate-pulse"></div>
+                                <div className="space-y-2">
+                                    <div className="h-4 bg-white/10 rounded w-full animate-pulse"></div>
+                                    <div className="h-4 bg-white/10 rounded w-5/6 animate-pulse"></div>
+                                    <div className="h-4 bg-white/10 rounded w-4/6 animate-pulse"></div>
+                                </div>
+                                <div className="space-y-3 pt-4">
+                                    {[1, 2, 3, 4].map((i) => (
+                                        <div key={i} className="flex items-center gap-3">
+                                            <div className="w-5 h-5 bg-white/10 rounded animate-pulse"></div>
+                                            <div className="h-4 bg-white/10 rounded w-48 animate-pulse"></div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+                        {/* 右側骨架屏 */}
+                        <div>
+                            <div className="bg-gradient-to-br from-blue-900/30 to-purple-900/30 backdrop-blur-sm border border-white/10 rounded-xl p-6 space-y-6">
+                                <div className="h-8 bg-white/10 rounded w-32 animate-pulse"></div>
+                                <div className="bg-white/5 rounded-lg p-4 space-y-3">
+                                    {[1, 2, 3].map((i) => (
+                                        <div key={i} className="flex justify-between">
+                                            <div className="h-4 bg-white/10 rounded w-20 animate-pulse"></div>
+                                            <div className="h-4 bg-white/10 rounded w-24 animate-pulse"></div>
+                                        </div>
+                                    ))}
+                                </div>
+                                <div className="h-12 bg-white/10 rounded animate-pulse"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
+    }
 
     if (!event) {
         return (

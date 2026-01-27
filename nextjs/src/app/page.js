@@ -10,6 +10,7 @@ export default function Home() {
   const [events, setEvents] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
+  const [isLoading, setIsLoading] = useState(true);
 
 
   // 過濾活動
@@ -24,6 +25,7 @@ export default function Home() {
   useEffect(() => {
     async function fetchEvents() {
       try {
+        setIsLoading(true);
         const response = await fetch('/api/v1/events');
         const data = await response.json();
 
@@ -32,6 +34,8 @@ export default function Home() {
         console.log('Fetched events from API:', data);
       } catch (error) {
         console.error('Error fetching events:', error);
+      } finally {
+        setIsLoading(false);
       }
     }
     fetchEvents();
@@ -95,7 +99,27 @@ export default function Home() {
 
       {/* 活動列表 */}
       <section className="container mx-auto px-4 pb-20">
-        {filteredEvents.length === 0 ? (
+        {isLoading ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[1, 2, 3, 4, 5, 6].map((i) => (
+              <div key={i} className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl overflow-hidden animate-pulse">
+                <div className="h-48 bg-white/10"></div>
+                <div className="p-6 space-y-4">
+                  <div className="h-6 bg-white/10 rounded w-3/4"></div>
+                  <div className="h-4 bg-white/10 rounded w-1/2"></div>
+                  <div className="space-y-2">
+                    <div className="h-3 bg-white/10 rounded w-full"></div>
+                    <div className="h-3 bg-white/10 rounded w-5/6"></div>
+                  </div>
+                  <div className="flex justify-between items-center pt-4">
+                    <div className="h-8 bg-white/10 rounded w-20"></div>
+                    <div className="h-8 bg-white/10 rounded w-16"></div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : filteredEvents.length === 0 ? (
           <div className="text-center py-20">
             <p className="text-gray-400 text-xl">找不到符合條件的活動</p>
           </div>

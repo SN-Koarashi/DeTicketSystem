@@ -57,3 +57,6 @@ keccak256
 最後，需要用到 blockchain oracle，選擇的是chainlink，而chainlink在這裡主要提供查詢:
 1. ETH主網路上的價格(用來計算票券價格轉換成ETH應該要是多少)
 2. 目前的現實時間戳
+
+## Source
+- 首頁影片來源： https://www.vecteezy.com/video/27989743-purple-plexus-abstract-digital-connection-moving-dots-and-lines-technology-background
