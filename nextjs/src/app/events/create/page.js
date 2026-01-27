@@ -182,7 +182,7 @@ export default function CreateEventPage() {
     };
 
     // 智慧合約互動 (Mock)
-    const interactWithContract = async (cid, dataHash, organizerAddress) => {
+    const interactWithContract = async (cid, dataHash, organizerAddress, maxTicketSupply, ticketPriceUSD) => {
         await new Promise(resolve => setTimeout(resolve, 20000));
         const eventId = await calculateHash({ cid, dataHash, organizerAddress });
         return { eventId };
@@ -248,7 +248,7 @@ export default function CreateEventPage() {
 
             // 步驟 6: 與智慧合約互動
             setSubmitStep('contract');
-            const { eventId } = await interactWithContract(cid, dataHash, address);
+            const { eventId } = await interactWithContract(cid, dataHash, address, parseInt(formData.totalTickets), parseInt(formData.priceCent));
             console.log('Event ID:', eventId);
 
             // 步驟 7: 完成
