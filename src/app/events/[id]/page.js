@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-
+import { useAccount } from 'wagmi';
 import { useRouter, useParams } from 'next/navigation';
 import Image from 'next/image';
 import { mockEvents } from '@/lib/mockData';
@@ -11,11 +11,11 @@ import { Calendar, MapPin, Users, Tag, ArrowLeft, ShoppingCart, CheckCircle } fr
 export default function EventDetailPage() {
     const params = useParams();
     const router = useRouter();
+    const { address, isConnected } = useAccount();
     const [event, setEvent] = useState(null);
     const [quantity, setQuantity] = useState(1);
     const [isPurchasing, setIsPurchasing] = useState(false);
     const [purchaseComplete, setPurchaseComplete] = useState(false);
-    const [walletConnected, setWalletConnected] = useState(false);
 
     useEffect(() => {
         if (params.id) {
@@ -39,10 +39,6 @@ export default function EventDetailPage() {
                     });
                 }
             });
-
-            // 檢查錢包連線狀態
-            const address = localStorage.getItem('mockWalletAddress');
-            setWalletConnected(!!address);
         }
     }, [params.id]);
 
@@ -54,12 +50,10 @@ export default function EventDetailPage() {
         );
     }
 
-    const remaining = getRemainingTickets(event);
-    const soldOut = isEventSoldOut(event);
-    const totalPrice = (parseFloat(event.ticketPrice) * quantity).toFixed(4);
+    const totalPrice = (parseFloat(event.price) * quantity).toFixed(2);
 
     const handlePurchase = async () => {
-        if (!walletConnected) {
+        if (!isConnected) {
             alert('請先連接錢包');
             return;
         }
@@ -118,7 +112,7 @@ export default function EventDetailPage() {
             <div className="container mx-auto px-4 py-6">
                 <button
                     onClick={() => router.back()}
-                    className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors"
+                    className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors cursor-pointer"
                 >
                     <ArrowLeft size={20} />
                     <span>返回活動列表</span>
@@ -136,11 +130,6 @@ export default function EventDetailPage() {
                                 fill
                                 className="object-cover"
                             />
-                            {soldOut && (
-                                <div className="absolute inset-0 bg-black/70 flex items-center justify-center">
-                                    <span className="text-3xl font-bold text-red-500">已售完</span>
-                                </div>
-                            )}
                         </div>
 
                         <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl p-6 space-y-4">
@@ -169,13 +158,13 @@ export default function EventDetailPage() {
 
                                 <div className="flex items-center gap-3 text-gray-300">
                                     <Users size={20} className="text-blue-400" />
-                                    <span>剩餘 {remaining} / {event.totalTickets} 張</span>
+                                    <span>最大供應量 {event.totalTickets} 張</span>
                                 </div>
 
                                 <div className="flex items-center gap-3">
                                     <Tag size={20} className="text-blue-400" />
                                     <span className="text-2xl font-bold text-blue-400">
-                                        {event.ticketPrice} {event.currency}
+                                        {event.price} $USD
                                     </span>
                                     <span className="text-gray-400">/ 張</span>
                                 </div>
@@ -184,6 +173,9 @@ export default function EventDetailPage() {
                             <div className="pt-4 border-t border-white/10">
                                 <p className="text-sm text-gray-400">
                                     主辦單位：{event.organizer}
+                                </p>
+                                <p className="text-sm text-gray-400 w-100 break-all">
+                                    單位簽章：{event.signature}
                                 </p>
                             </div>
                         </div>
@@ -194,13 +186,13 @@ export default function EventDetailPage() {
                         <div className="bg-gradient-to-br from-blue-900/30 to-purple-900/30 backdrop-blur-sm border border-white/10 rounded-xl p-6 space-y-6">
                             <h2 className="text-2xl font-bold">購買票券</h2>
 
-                            {!walletConnected && (
+                            {!isConnected && (
                                 <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-4">
                                     <p className="text-yellow-400">請先連接錢包才能購票</p>
                                 </div>
                             )}
 
-                            {soldOut ? (
+                            {false ? (
                                 <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-4">
                                     <p className="text-red-400 text-center text-lg font-medium">
                                         此活動票券已售完
@@ -214,7 +206,7 @@ export default function EventDetailPage() {
                                         <div className="flex items-center gap-4">
                                             <button
                                                 onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                                                className="w-12 h-12 bg-white/10 hover:bg-white/20 rounded-lg font-bold text-xl transition-colors"
+                                                className="w-12 h-12 bg-white/10 hover:bg-white/20 rounded-lg font-bold text-xl transition-colors cursor-pointer"
                                                 disabled={quantity <= 1}
                                             >
                                                 −
@@ -223,15 +215,15 @@ export default function EventDetailPage() {
                                                 {quantity}
                                             </span>
                                             <button
-                                                onClick={() => setQuantity(Math.min(remaining, quantity + 1))}
-                                                className="w-12 h-12 bg-white/10 hover:bg-white/20 rounded-lg font-bold text-xl transition-colors"
-                                                disabled={quantity >= remaining}
+                                                onClick={() => setQuantity(quantity + 1)}
+                                                className="w-12 h-12 bg-white/10 hover:bg-white/20 rounded-lg font-bold text-xl transition-colors cursor-pointer"
+                                                disabled={false}
                                             >
                                                 +
                                             </button>
                                         </div>
                                         <p className="text-sm text-gray-400">
-                                            最多可購買 {remaining} 張
+                                            最多可購買 {event.totalTickets} 張
                                         </p>
                                     </div>
 
@@ -239,7 +231,7 @@ export default function EventDetailPage() {
                                     <div className="bg-white/5 rounded-lg p-4 space-y-2">
                                         <div className="flex justify-between text-gray-300">
                                             <span>單價</span>
-                                            <span>{event.ticketPrice} {event.currency}</span>
+                                            <span>{event.price} $USD</span>
                                         </div>
                                         <div className="flex justify-between text-gray-300">
                                             <span>數量</span>
@@ -248,17 +240,17 @@ export default function EventDetailPage() {
                                         <div className="border-t border-white/10 pt-2 mt-2"></div>
                                         <div className="flex justify-between text-xl font-bold">
                                             <span>總計</span>
-                                            <span className="text-blue-400">{totalPrice} {event.currency}</span>
+                                            <span className="text-blue-400">{totalPrice} $USD</span>
                                         </div>
                                     </div>
 
                                     {/* 購買按鈕 */}
                                     <button
                                         onClick={handlePurchase}
-                                        disabled={!walletConnected || isPurchasing}
-                                        className={`w-full py-4 rounded-lg font-bold text-lg transition-all flex items-center justify-center gap-2 ${!walletConnected || isPurchasing
+                                        disabled={!isConnected || isPurchasing}
+                                        className={`w-full py-4 rounded-lg font-bold text-lg transition-all flex items-center justify-center gap-2 ${!isConnected || isPurchasing
                                             ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
-                                            : 'bg-blue-600 hover:bg-blue-700 text-white hover:shadow-lg hover:shadow-blue-500/50'
+                                            : 'bg-blue-600 hover:bg-blue-700 text-white hover:shadow-lg hover:shadow-blue-500/50 cursor-pointer'
                                             }`}
                                     >
                                         {isPurchasing ? (
