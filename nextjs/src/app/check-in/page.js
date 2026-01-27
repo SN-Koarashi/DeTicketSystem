@@ -1,35 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useAccount, useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
+import { useAccount } from 'wagmi';
 import { Camera, CheckCircle, XCircle, QrCode, Scan, Wallet } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
-
-// 合約地址 - 請從部署輸出中獲取
-const CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_CONTRACT_ADDRESS;
-
-// DeTicketSystem 合約 ABI（只包含驗票所需的函數）
-const CONTRACT_ABI = [
-    {
-        "inputs": [
-            {
-                "internalType": "bytes32",
-                "name": "paymentId",
-                "type": "bytes32"
-            }
-        ],
-        "name": "verifyTicket",
-        "outputs": [
-            {
-                "internalType": "bool",
-                "name": "success",
-                "type": "bool"
-            }
-        ],
-        "stateMutability": "nonpayable",
-        "type": "function"
-    }
-];
 
 export default function CheckInPage() {
     const searchParams = useSearchParams();
@@ -40,12 +14,7 @@ export default function CheckInPage() {
     const [checkInHistory, setCheckInHistory] = useState([]);
     const [ticketIdInput, setTicketIdInput] = useState(paymentId);
     const [isVerifying, setIsVerifying] = useState(false);
-
-    const { data: hash, writeContract, error: writeError, isPending } = useWriteContract();
-
-    const { isLoading: isConfirming, isSuccess: isConfirmed } = useWaitForTransactionReceipt({
-        hash,
-    });
+    const [txHash, setTxHash] = useState(null);
 
     useEffect(() => {
         // 載入簽到歷史
@@ -53,27 +22,13 @@ export default function CheckInPage() {
         setCheckInHistory(history);
     }, []);
 
-    // 監聽交易確認
-    useEffect(() => {
-        if (isConfirmed && hash) {
-            handleVerifySuccess(ticketIdInput);
-        }
-    }, [isConfirmed, hash]);
-
-    // 監聽錯誤
-    useEffect(() => {
-        if (writeError) {
-            handleVerifyError(writeError.message);
-        }
-    }, [writeError]);
-
     // 處理驗票成功
-    const handleVerifySuccess = (ticketId) => {
+    const handleVerifySuccess = (ticketId, transactionHash) => {
         const checkIn = {
             ticketId: ticketId,
             checkInTime: new Date().toISOString(),
             verifier: address,
-            txHash: hash
+            txHash: transactionHash
         };
 
         const newHistory = [checkIn, ...checkInHistory];
@@ -88,6 +43,7 @@ export default function CheckInPage() {
 
         setIsVerifying(false);
         setTicketIdInput('');
+        setTxHash(null);
 
         // 5 秒後清除結果
         setTimeout(() => {
@@ -141,13 +97,46 @@ export default function CheckInPage() {
             setIsVerifying(true);
             setCheckInResult(null);
 
-            // 調用智慧合約
-            writeContract({
-                address: CONTRACT_ADDRESS,
-                abi: CONTRACT_ABI,
-                functionName: 'verifyTicket',
-                args: [ticketIdInput.trim()],
-            });
+            // 使用 ethers.js 調用智慧合約（與購票頁面相同方式）
+            const { BrowserProvider, Contract } = await import('ethers');
+
+            // 從環境變數取得智慧合約地址
+            const contractAddress = process.env.NEXT_PUBLIC_SMART_CONTRACT_ADDRESS;
+
+            // 智慧合約 ABI
+            const contractABI = [
+                {
+                    "inputs": [
+                        { "internalType": "bytes32", "name": "paymentId", "type": "bytes32" }
+                    ],
+                    "name": "verifyTicket",
+                    "outputs": [
+                        { "internalType": "bool", "name": "success", "type": "bool" }
+                    ],
+                    "stateMutability": "nonpayable",
+                    "type": "function"
+                }
+            ];
+
+            // 獲取 provider 和 signer
+            const provider = new BrowserProvider(window.ethereum);
+            const signer = await provider.getSigner();
+
+            // 創建合約實例
+            const contract = new Contract(contractAddress, contractABI, signer);
+
+            // 調用 verifyTicket 函數
+            const tx = await contract.verifyTicket(ticketIdInput.trim());
+
+            console.log('Transaction sent:', tx.hash);
+            setTxHash(tx.hash);
+
+            // 等待交易確認
+            const receipt = await tx.wait();
+            console.log('Transaction confirmed:', receipt.hash);
+
+            // 驗票成功
+            handleVerifySuccess(ticketIdInput.trim(), receipt.hash);
 
         } catch (err) {
             console.error('驗票錯誤:', err);
@@ -233,25 +222,20 @@ export default function CheckInPage() {
                                     placeholder="0x..."
                                     className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:border-blue-500 transition-colors font-mono text-sm"
                                     onKeyPress={(e) => e.key === 'Enter' && handleVerifyTicket()}
-                                    disabled={!isConnected || isVerifying || isPending || isConfirming || paymentId.length > 0}
+                                    disabled={!isConnected || isVerifying || paymentId.length > 0}
                                 />
                                 <button
                                     onClick={handleVerifyTicket}
-                                    disabled={!isConnected || isVerifying || isPending || isConfirming || !ticketIdInput.trim()}
-                                    className={`w-full px-6 py-3 rounded-lg font-medium transition-colors flex items-center justify-center gap-2 ${!isConnected || isVerifying || isPending || isConfirming || !ticketIdInput.trim()
+                                    disabled={!isConnected || isVerifying || !ticketIdInput.trim()}
+                                    className={`w-full px-6 py-3 rounded-lg font-medium transition-colors flex items-center justify-center gap-2 ${!isConnected || isVerifying || !ticketIdInput.trim()
                                         ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
                                         : 'bg-green-600 hover:bg-green-700 text-white cursor-pointer'
                                         }`}
                                 >
-                                    {isVerifying || isPending ? (
+                                    {isVerifying ? (
                                         <>
                                             <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                                            <span>等待簽名...</span>
-                                        </>
-                                    ) : isConfirming ? (
-                                        <>
-                                            <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                                            <span>交易確認中...</span>
+                                            <span>處理中...</span>
                                         </>
                                     ) : (
                                         <>

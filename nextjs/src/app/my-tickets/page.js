@@ -185,7 +185,7 @@ export default function MyTicketsPage() {
                         <div className="space-y-2 text-sm text-gray-400 mb-6 break-all">
                             <p>票券 ID: {selectedTicket.ticket.ticketId}</p>
                             <p className="text-center text-xs">
-                                請在活動現場出示此 QR Code 進行簽到
+                                請在活動現場掃描此 QR Code 進行簽到
                             </p>
                         </div>
 
