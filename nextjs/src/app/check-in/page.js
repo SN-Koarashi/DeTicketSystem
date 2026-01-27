@@ -221,36 +221,6 @@ export default function CheckInPage() {
                                 <p className="text-gray-400">請掃描 QR Code 開啟此頁面</p>
                             </div>
                         </div>
-                        {/* <div className="bg-black rounded-xl overflow-hidden">
-                            <div className="aspect-video flex items-center justify-center relative">
-                                {scanning ? (
-                                    <div className="absolute inset-0 flex items-center justify-center">
-                                        <div className="w-64 h-64 border-4 border-blue-500 rounded-lg relative">
-                                            <div className="absolute top-0 left-0 w-full h-1 bg-blue-500 animate-pulse"></div>
-                                            <Camera size={80} className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-blue-500" />
-                                        </div>
-                                    </div>
-                                ) : (
-                                    <div className="text-center space-y-4">
-                                        <QrCode size={120} className="mx-auto text-gray-600" />
-                                        <p className="text-gray-400">點擊下方按鈕開始掃描</p>
-                                    </div>
-                                )}
-                            </div>
-                        </div> */}
-
-                        {/* 掃描按鈕 */}
-                        {/* <button
-                            onClick={handleScan}
-                            disabled={scanning || !isConnected || paymentId.length > 0}
-                            className={`w-full py-4 rounded-lg font-bold text-lg transition-all flex items-center justify-center gap-3 ${scanning || !isConnected || paymentId.length > 0
-                                ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
-                                : 'bg-blue-600 hover:bg-blue-700 text-white hover:shadow-lg hover:shadow-blue-500/50 cursor-pointer'
-                                }`}
-                        >
-                            <Scan size={24} />
-                            <span>{scanning ? '掃描中...' : '開始掃描 QR Code'}</span>
-                        </button> */}
 
                         {/* 手動輸入 */}
                         <div className="pt-6 border-t border-white/10">
