@@ -175,7 +175,7 @@ export default function MyTicketsPage() {
                         <div className="bg-white p-8 rounded-lg mb-4">
                             <div className="aspect-square bg-gray-200 rounded-lg flex items-center justify-center">
                                 <QRCode
-                                    value={location.origin + '/check-in/' + selectedTicket.ticket.ticketId}
+                                    value={location.origin + '/check-in/?paymentId=' + selectedTicket.ticket.ticketId}
                                     size={300}
                                     level="H"
                                 />

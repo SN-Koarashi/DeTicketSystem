@@ -3,9 +3,10 @@
 import { useState, useEffect } from 'react';
 import { useAccount, useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
 import { Camera, CheckCircle, XCircle, QrCode, Scan, Wallet } from 'lucide-react';
+import { useSearchParams } from 'next/navigation';
 
 // 合約地址 - 請從部署輸出中獲取
-const CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_CONTRACT_ADDRESS || '0xYourContractAddress';
+const CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_CONTRACT_ADDRESS;
 
 // DeTicketSystem 合約 ABI（只包含驗票所需的函數）
 const CONTRACT_ABI = [
@@ -31,11 +32,13 @@ const CONTRACT_ABI = [
 ];
 
 export default function CheckInPage() {
+    const searchParams = useSearchParams();
+    const paymentId = searchParams.get('paymentId') || '';
     const { address, isConnected } = useAccount();
     const [scanning, setScanning] = useState(false);
     const [checkInResult, setCheckInResult] = useState(null);
     const [checkInHistory, setCheckInHistory] = useState([]);
-    const [ticketIdInput, setTicketIdInput] = useState('');
+    const [ticketIdInput, setTicketIdInput] = useState(paymentId);
     const [isVerifying, setIsVerifying] = useState(false);
 
     const { data: hash, writeContract, error: writeError, isPending } = useWriteContract();
@@ -233,10 +236,10 @@ export default function CheckInPage() {
                         {/* 掃描按鈕 */}
                         <button
                             onClick={handleScan}
-                            disabled={scanning || !isConnected}
-                            className={`w-full py-4 rounded-lg font-bold text-lg transition-all flex items-center justify-center gap-3 ${scanning || !isConnected
+                            disabled={scanning || !isConnected || paymentId.length > 0}
+                            className={`w-full py-4 rounded-lg font-bold text-lg transition-all flex items-center justify-center gap-3 ${scanning || !isConnected || paymentId.length > 0
                                 ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
-                                : 'bg-blue-600 hover:bg-blue-700 text-white hover:shadow-lg hover:shadow-blue-500/50'
+                                : 'bg-blue-600 hover:bg-blue-700 text-white hover:shadow-lg hover:shadow-blue-500/50 cursor-pointer'
                                 }`}
                         >
                             <Scan size={24} />
@@ -249,19 +252,19 @@ export default function CheckInPage() {
                             <div className="space-y-3">
                                 <input
                                     type="text"
-                                    value={ticketIdInput}
+                                    value={paymentId || ticketIdInput}
                                     onChange={(e) => setTicketIdInput(e.target.value)}
                                     placeholder="0x..."
                                     className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:border-blue-500 transition-colors font-mono text-sm"
                                     onKeyPress={(e) => e.key === 'Enter' && handleVerifyTicket()}
-                                    disabled={!isConnected || isVerifying || isPending || isConfirming}
+                                    disabled={!isConnected || isVerifying || isPending || isConfirming || paymentId.length > 0}
                                 />
                                 <button
                                     onClick={handleVerifyTicket}
                                     disabled={!isConnected || isVerifying || isPending || isConfirming || !ticketIdInput.trim()}
                                     className={`w-full px-6 py-3 rounded-lg font-medium transition-colors flex items-center justify-center gap-2 ${!isConnected || isVerifying || isPending || isConfirming || !ticketIdInput.trim()
                                         ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
-                                        : 'bg-green-600 hover:bg-green-700 text-white'
+                                        : 'bg-green-600 hover:bg-green-700 text-white cursor-pointer'
                                         }`}
                                 >
                                     {isVerifying || isPending ? (
