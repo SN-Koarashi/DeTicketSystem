@@ -1,13 +1,15 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+
+import { useRouter, useParams } from 'next/navigation';
 import Image from 'next/image';
 import { mockEvents } from '@/lib/mockData';
 import { formatDate, getRemainingTickets, isEventSoldOut } from '@/lib/utils';
 import { Calendar, MapPin, Users, Tag, ArrowLeft, ShoppingCart, CheckCircle } from 'lucide-react';
 
-export default function EventDetailPage({ params }) {
+export default function EventDetailPage() {
+    const params = useParams();
     const router = useRouter();
     const [event, setEvent] = useState(null);
     const [quantity, setQuantity] = useState(1);
@@ -16,13 +18,32 @@ export default function EventDetailPage({ params }) {
     const [walletConnected, setWalletConnected] = useState(false);
 
     useEffect(() => {
-        // 尋找活動
-        const foundEvent = mockEvents.find(e => e.id === params.id);
-        setEvent(foundEvent);
+        if (params.id) {
+            async function fetchEvents() {
+                try {
+                    const response = await fetch('/ipfs/data/' + params.id);
+                    const data = await response.json();
 
-        // 檢查錢包連線狀態
-        const address = localStorage.getItem('mockWalletAddress');
-        setWalletConnected(!!address);
+                    return data;
+                } catch (error) {
+                    console.error('Error fetching events:', error);
+                    return null;
+                }
+            }
+
+            fetchEvents().then(data => {
+                if (data && data.success) {
+                    setEvent({
+                        ...data.data,
+                        id: params.id
+                    });
+                }
+            });
+
+            // 檢查錢包連線狀態
+            const address = localStorage.getItem('mockWalletAddress');
+            setWalletConnected(!!address);
+        }
     }, [params.id]);
 
     if (!event) {
@@ -236,8 +257,8 @@ export default function EventDetailPage({ params }) {
                                         onClick={handlePurchase}
                                         disabled={!walletConnected || isPurchasing}
                                         className={`w-full py-4 rounded-lg font-bold text-lg transition-all flex items-center justify-center gap-2 ${!walletConnected || isPurchasing
-                                                ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
-                                                : 'bg-blue-600 hover:bg-blue-700 text-white hover:shadow-lg hover:shadow-blue-500/50'
+                                            ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
+                                            : 'bg-blue-600 hover:bg-blue-700 text-white hover:shadow-lg hover:shadow-blue-500/50'
                                             }`}
                                     >
                                         {isPurchasing ? (
