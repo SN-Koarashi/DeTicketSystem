@@ -12,7 +12,7 @@ export default function Modal({
             <div className="bg-gray-900 p-8 rounded-2xl max-w-2xl w-full mx-4 border border-gray-700">
                 <div className="text-center mb-6">
                     <CheckCircle className="w-16 h-16 text-green-400 mx-auto mb-4" />
-                    <h3 className="text-3xl font-bold text-green-400">活動建立成功！</h3>
+                    <h3 className="text-3xl font-bold text-green-400">活動建立成功</h3>
                 </div>
 
                 <div className="space-y-4 bg-gray-800 p-6 rounded-xl mb-6">
@@ -39,7 +39,7 @@ export default function Modal({
 
                     <div className="pt-4 border-t border-gray-700">
                         <label className="text-sm text-gray-400 mb-2 block">活動 QR Code 資料</label>
-                        <div className="bg-white p-6 rounded-lg w-[160px]">
+                        <div className="bg-white p-6 rounded-lg w-[160px] mx-auto">
                             <div className="aspect-square bg-gray-200 flex items-center justify-center text-gray-600 text-sm">
                                 QR Code 預覽<br />
                                 (Phase 2 實作)
