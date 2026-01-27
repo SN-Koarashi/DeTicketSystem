@@ -40,8 +40,17 @@ export default function Home() {
   return (
     <div className="min-h-screen">
       {/* Hero Section */}
-      <section className="bg-gradient-to-br from-blue-900/50 via-purple-900/50 to-black py-20 px-4">
-        <div className="container mx-auto text-center">
+      <section className="bg-gradient-to-br from-blue-900/50 via-purple-900/50 to-black py-20 px-4 relative">
+        <div className="absolute top-0 left-0 w-full h-full bg-black/60 z-0">
+          <video
+            className="absolute top-0 left-0 w-full h-full object-cover z-0"
+            src="/background.mp4"
+            autoPlay
+            loop
+            muted
+          />
+        </div>
+        <div className="container mx-auto text-center z-10 relative">
           <h1 className="text-5xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
             去中心化售票平台
           </h1>
@@ -52,7 +61,7 @@ export default function Home() {
           {/* 搜尋欄 */}
           <div className="max-w-2xl mx-auto">
             <div className="relative">
-              <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+              <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 z-10" size={20} />
               <input
                 type="text"
                 placeholder="搜尋活動名稱或關鍵字..."
@@ -100,51 +109,7 @@ export default function Home() {
       </section>
 
       <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
+        <p className="text-center text-sm text-gray-500">© 2026 DeTicket. All rights reserved.</p>
       </footer>
     </div >
   );
