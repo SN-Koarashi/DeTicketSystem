@@ -50,7 +50,7 @@ export default function EventDetailPage() {
         );
     }
 
-    const totalPrice = (parseFloat(event.price) * quantity).toFixed(2);
+    const totalPrice = (parseInt(event.priceCent) * quantity);
 
     const handlePurchase = async () => {
         if (!isConnected) {
@@ -201,7 +201,7 @@ export default function EventDetailPage() {
                             ) : (
                                 <>
                                     {/* 數量選擇 */}
-                                    <div className="space-y-2">
+                                    {/* <div className="space-y-2">
                                         <label className="block text-gray-300">購買數量</label>
                                         <div className="flex items-center gap-4">
                                             <button
@@ -225,13 +225,13 @@ export default function EventDetailPage() {
                                         <p className="text-sm text-gray-400">
                                             最多可購買 {event.totalTickets} 張
                                         </p>
-                                    </div>
+                                    </div> */}
 
                                     {/* 價格摘要 */}
                                     <div className="bg-white/5 rounded-lg p-4 space-y-2">
                                         <div className="flex justify-between text-gray-300">
                                             <span>單價</span>
-                                            <span>{event.price} $USD</span>
+                                            <span>{event.priceCent}  ¢ Cents</span>
                                         </div>
                                         <div className="flex justify-between text-gray-300">
                                             <span>數量</span>
@@ -240,7 +240,7 @@ export default function EventDetailPage() {
                                         <div className="border-t border-white/10 pt-2 mt-2"></div>
                                         <div className="flex justify-between text-xl font-bold">
                                             <span>總計</span>
-                                            <span className="text-blue-400">{totalPrice} $USD</span>
+                                            <span className="text-blue-400">{totalPrice}  ¢ Cents</span>
                                         </div>
                                     </div>
 
