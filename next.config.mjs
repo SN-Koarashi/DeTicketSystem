@@ -20,6 +20,10 @@ const nextConfig = {
                 source: '/api/:path*',
                 destination: 'http://localhost:8081/:path*',
             },
+            {
+                source: '/ipfs/:path*',
+                destination: 'http://localhost:3001/:path*',
+            },
         ];
     }
 };
