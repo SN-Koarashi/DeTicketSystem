@@ -6,6 +6,7 @@
   "license": "UNLICENSED",
   "description": "",
   "dependencies": {
+    "@chainlink/contracts": "^1.1.1",
     "@nomicfoundation/hardhat-toolbox": "^6.1.0",
     "dotenv": "^17.2.2",
     "ethers": "^6.15.0",
