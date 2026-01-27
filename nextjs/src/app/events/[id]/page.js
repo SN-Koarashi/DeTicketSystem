@@ -81,8 +81,19 @@ export default function EventDetailPage() {
             // 從環境變數取得智慧合約地址
             const contractAddress = process.env.NEXT_PUBLIC_SMART_CONTRACT_ADDRESS;
 
-            // 智慧合約 ABI（purchaseTicket 函數）
+            // 智慧合約 ABI
             const contractABI = [
+                {
+                    "inputs": [
+                        { "internalType": "uint256", "name": "ticketPriceUSD", "type": "uint256" }
+                    ],
+                    "name": "calculateRequiredETH",
+                    "outputs": [
+                        { "internalType": "uint256", "name": "requiredETH", "type": "uint256" }
+                    ],
+                    "stateMutability": "view",
+                    "type": "function"
+                },
                 {
                     "inputs": [
                         { "internalType": "bytes32", "name": "eventId", "type": "bytes32" },
@@ -104,14 +115,19 @@ export default function EventDetailPage() {
             // 創建合約實例
             const contract = new Contract(contractAddress, contractABI, signer);
 
-            // 調用 purchaseTicket 函數（需要支付 ETH）
+            // 步驟 4: 計算需要支付的 ETH 數量
+            const ticketPriceUSD = parseInt(event.priceCent); // 價格以美分為單位
+            const requiredETH = await contract.calculateRequiredETH(ticketPriceUSD);
+            console.log('Required ETH:', requiredETH.toString());
+
+            // 步驟 5: 調用 purchaseTicket 函數（支付計算出的 ETH）
             const tx = await contract.purchaseTicket(eventId, ticketNonce, {
-                value: 0 // 合約會根據 Chainlink 價格自動計算需要的 ETH
+                value: requiredETH
             });
 
             console.log('Transaction sent:', tx.hash);
 
-            // 等待交易確認
+            // 步驟 6: 等待交易確認
             const receipt = await tx.wait();
             console.log('Transaction confirmed:', receipt.hash);
 
@@ -119,7 +135,7 @@ export default function EventDetailPage() {
             const paymentId = receipt.logs[0].topics[1];
             console.log('Payment ID:', paymentId);
 
-            // 步驟 4: 購票成功
+            // 步驟 7: 購票成功
             setPurchaseComplete(true);
 
             // 3秒後導向「我的票券」頁面
