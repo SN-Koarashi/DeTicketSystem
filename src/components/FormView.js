@@ -67,10 +67,11 @@ export default function FormView({
                                 className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:border-blue-500 transition-colors"
                                 disabled={!isConnected || chain?.id !== 11155111}
                             >
-                                <option value="concert">音樂會</option>
-                                <option value="conference">研討會</option>
-                                <option value="sports">體育</option>
-                                <option value="exhibition">展覽</option>
+                                <option value="technology">科技</option>
+                                <option value="music">音樂</option>
+                                <option value="education">教育</option>
+                                <option value="art">藝術</option>
+                                <option value="business">商業</option>
                                 <option value="other">其他</option>
                             </select>
                         </div>

@@ -16,7 +16,7 @@ export default function CreateEventPage() {
     const [formData, setFormData] = useState({
         name: '',
         description: '',
-        category: 'concert',
+        category: 'technology',
         date: '',
         time: '',
         location: '',
@@ -105,21 +105,48 @@ export default function CreateEventPage() {
         return keccak256(toUtf8Bytes(JSON.stringify(data)));
     };
 
-    // 上傳到 IPFS (Mock)
+    // 上傳到 IPFS
     const uploadToIPFS = async (data) => {
-        await new Promise(resolve => setTimeout(resolve, 2000));
-        const mockCID = 'Qm' + Math.random().toString(36).slice(2, 48);
-        return mockCID;
+        const jsonData = JSON.stringify(data);
+        const response = await fetch('/ipfs/upload', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: jsonData,
+        });
+
+        if (response.ok === false) {
+            throw new Error(result.error || 'Failed to upload data to IPFS');
+        }
+
+        const result = await response.json();
+
+        return result?.cid;
     };
 
-    // 上傳到資料庫 (Mock)
+    // 上傳到資料庫
     const uploadToDatabase = async (cid, summary) => {
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        const jsonData = JSON.stringify({ cid, summary });
+        const response = await fetch('/api/v1/events/create', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: jsonData,
+        });
+        const result = await response.json();
+
+        if (!result.success || response.ok === false) {
+            throw new Error(result.error || 'Failed to upload event to database');
+        }
+
+        await new Promise(resolve => setTimeout(resolve, 500));
     };
 
     // 智慧合約互動 (Mock)
     const interactWithContract = async (cid, dataHash, organizerAddress) => {
-        await new Promise(resolve => setTimeout(resolve, 2000));
+        await new Promise(resolve => setTimeout(resolve, 20000));
         const eventId = await calculateHash({ cid, dataHash, organizerAddress });
         return { eventId };
     };
@@ -174,11 +201,10 @@ export default function CreateEventPage() {
             setSubmitStep('database');
             const summary = {
                 name: formData.name,
-                description: formData.description,
+                description: formData.description.substring(0, 60) + '...',
                 date: formData.date,
                 location: formData.location,
                 price: formData.price,
-                totalTickets: formData.totalTickets,
                 image: formData.image
             };
             await uploadToDatabase(cid, summary);
