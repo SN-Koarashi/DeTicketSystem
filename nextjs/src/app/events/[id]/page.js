@@ -5,7 +5,7 @@ import { useAccount } from 'wagmi';
 import { useRouter, useParams } from 'next/navigation';
 import Image from 'next/image';
 import { mockEvents } from '@/lib/mockData';
-import { calculateABIHash, calculateHash, formatDate, getRemainingTickets, isEventSoldOut } from '@/lib/utils';
+import { calculateABIHash, calculateHash, categories, formatDate, getRemainingTickets, isEventSoldOut } from '@/lib/utils';
 import { Calendar, MapPin, Users, Tag, ArrowLeft, ShoppingCart, CheckCircle } from 'lucide-react';
 
 export default function EventDetailPage() {
@@ -199,7 +199,7 @@ export default function EventDetailPage() {
 
                             <div className="flex items-center gap-2">
                                 <span className="px-3 py-1 bg-blue-600 rounded-full text-sm">
-                                    {event.category}
+                                    {categories[event.category]}
                                 </span>
                             </div>
 
@@ -226,7 +226,7 @@ export default function EventDetailPage() {
                                 <div className="flex items-center gap-3">
                                     <Tag size={20} className="text-blue-400" />
                                     <span className="text-2xl font-bold text-blue-400">
-                                        {event.price} $USD
+                                        {event.priceCent} ¢ Cents
                                     </span>
                                     <span className="text-gray-400">/ 張</span>
                                 </div>
