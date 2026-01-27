@@ -10,7 +10,7 @@ const nextConfig = {
         ],
     },
     trailingSlash: true,
-    devIndicators: { position: "top-left" },
+    devIndicators: { position: "bottom-left" },
     env: {
         NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID: "732dbd3ba5be9978067e2c1318e5cad7"
     },

@@ -5,6 +5,7 @@
         "ipfs",
         "keccak",
         "libp",
+        "opennextjs",
         "rainbowkit",
         "unixfs",
         "wagmi"
