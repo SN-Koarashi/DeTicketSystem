@@ -48,18 +48,54 @@ export default function CreateEventPage() {
         }));
     };
 
-    // 上傳圖片 (Mock)
-    const handleImageUpload = (e) => {
+    // 上傳圖片
+    const handleImageUpload = async (e) => {
         const file = e.target.files[0];
-        if (file) {
+        if (!file) return;
+
+        // 檢查檔案大小（10MB = 10 * 1024 * 1024 bytes）
+        const maxSize = 10 * 1024 * 1024;
+        if (file.size > maxSize) {
+            alert('圖片大小不能超過 10MB');
+            e.target.value = ''; // 清空 input
+            return;
+        }
+
+        try {
+            // 讀取圖片
+            const img = new Image();
             const reader = new FileReader();
-            reader.onload = (e) => {
-                setFormData(prev => ({
-                    ...prev,
-                    image: e.target.result
-                }));
+
+            reader.onload = (readerEvent) => {
+                img.onload = () => {
+                    // 建立 canvas 進行壓縮
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+
+                    // 設定 canvas 尺寸為原始圖片尺寸
+                    canvas.width = img.width;
+                    canvas.height = img.height;
+
+                    // 繪製圖片到 canvas
+                    ctx.drawImage(img, 0, 0);
+
+                    // 轉換為 webp 格式，品質 0.75
+                    const compressedDataUrl = canvas.toDataURL('image/webp', 0.75);
+
+                    // 更新狀態
+                    setFormData(prev => ({
+                        ...prev,
+                        image: compressedDataUrl
+                    }));
+                };
+
+                img.src = readerEvent.target.result;
             };
+
             reader.readAsDataURL(file);
+        } catch (error) {
+            console.error('圖片處理失敗:', error);
+            alert('圖片處理失敗，請重試');
         }
     };
 
