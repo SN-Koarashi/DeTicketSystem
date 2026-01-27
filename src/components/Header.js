@@ -20,8 +20,8 @@ export default function Header() {
 
                     {/* Navigation */}
                     <nav className="hidden md:flex items-center gap-6">
-                        <Link href="/" className="hover:text-blue-400 transition-colors">
-                            活動列表
+                        <Link href="/events/create" className="hover:text-blue-400 transition-colors">
+                            建立活動
                         </Link>
                         <Link href="/my-tickets" className="hover:text-blue-400 transition-colors">
                             我的票券
