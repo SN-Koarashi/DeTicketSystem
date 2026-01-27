@@ -1,160 +1,187 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Camera, CheckCircle, XCircle, QrCode, Scan } from 'lucide-react';
-import { mockEvents } from '@/lib/mockData';
+import { useAccount, useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
+import { Camera, CheckCircle, XCircle, QrCode, Scan, Wallet } from 'lucide-react';
+
+// 合約地址 - 請從部署輸出中獲取
+const CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_CONTRACT_ADDRESS || '0xYourContractAddress';
+
+// DeTicketSystem 合約 ABI（只包含驗票所需的函數）
+const CONTRACT_ABI = [
+    {
+        "inputs": [
+            {
+                "internalType": "bytes32",
+                "name": "paymentId",
+                "type": "bytes32"
+            }
+        ],
+        "name": "verifyTicket",
+        "outputs": [
+            {
+                "internalType": "bool",
+                "name": "success",
+                "type": "bool"
+            }
+        ],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    }
+];
 
 export default function CheckInPage() {
+    const { address, isConnected } = useAccount();
     const [scanning, setScanning] = useState(false);
     const [checkInResult, setCheckInResult] = useState(null);
     const [checkInHistory, setCheckInHistory] = useState([]);
-    const [scanInput, setScanInput] = useState('');
+    const [ticketIdInput, setTicketIdInput] = useState('');
+    const [isVerifying, setIsVerifying] = useState(false);
+
+    const { data: hash, writeContract, error: writeError, isPending } = useWriteContract();
+
+    const { isLoading: isConfirming, isSuccess: isConfirmed } = useWaitForTransactionReceipt({
+        hash,
+    });
 
     useEffect(() => {
         // 載入簽到歷史
-        const history = JSON.parse(localStorage.getItem('mockCheckInHistory') || '[]');
+        const history = JSON.parse(localStorage.getItem('checkInHistory') || '[]');
         setCheckInHistory(history);
     }, []);
 
-    // 模擬掃描 QR Code
-    const handleScan = () => {
-        setScanning(true);
-
-        // 模擬掃描過程
-        setTimeout(() => {
-            // 從 localStorage 獲取購買記錄
-            const purchases = JSON.parse(localStorage.getItem('mockPurchases') || '[]');
-
-            if (purchases.length === 0) {
-                setCheckInResult({
-                    success: false,
-                    message: '找不到票券記錄'
-                });
-                setScanning(false);
-                return;
-            }
-
-            // 隨機選一張未使用的票券來模擬掃描
-            let foundTicket = null;
-            let foundPurchase = null;
-
-            for (const purchase of purchases) {
-                const unusedTicket = purchase.tickets.find(t => !t.used);
-                if (unusedTicket) {
-                    foundTicket = unusedTicket;
-                    foundPurchase = purchase;
-                    break;
-                }
-            }
-
-            if (!foundTicket) {
-                setCheckInResult({
-                    success: false,
-                    message: '所有票券都已使用'
-                });
-                setScanning(false);
-                return;
-            }
-
-            // 標記票券為已使用
-            foundTicket.used = true;
-            localStorage.setItem('mockPurchases', JSON.stringify(purchases));
-
-            // 找到對應的活動
-            const event = mockEvents.find(e => e.id === foundPurchase.eventId);
-
-            // 記錄簽到
-            const checkIn = {
-                ticketId: foundTicket.ticketId,
-                eventId: foundPurchase.eventId,
-                eventName: foundPurchase.eventName,
-                checkInTime: new Date().toISOString(),
-                location: event?.location || '未知地點'
-            };
-
-            const newHistory = [checkIn, ...checkInHistory];
-            localStorage.setItem('mockCheckInHistory', JSON.stringify(newHistory));
-            setCheckInHistory(newHistory);
-
-            setCheckInResult({
-                success: true,
-                message: '簽到成功！',
-                data: checkIn
-            });
-
-            setScanning(false);
-
-            // 3 秒後清除結果
-            setTimeout(() => {
-                setCheckInResult(null);
-            }, 3000);
-        }, 1500);
-    };
-
-    // 手動輸入票券 ID 簽到
-    const handleManualCheckIn = () => {
-        if (!scanInput.trim()) {
-            alert('請輸入票券 ID');
-            return;
+    // 監聽交易確認
+    useEffect(() => {
+        if (isConfirmed && hash) {
+            handleVerifySuccess(ticketIdInput);
         }
+    }, [isConfirmed, hash]);
 
-        const purchases = JSON.parse(localStorage.getItem('mockPurchases') || '[]');
-        let foundTicket = null;
-        let foundPurchase = null;
-
-        for (const purchase of purchases) {
-            const ticket = purchase.tickets.find(t => t.ticketId === scanInput.trim());
-            if (ticket) {
-                foundTicket = ticket;
-                foundPurchase = purchase;
-                break;
-            }
+    // 監聽錯誤
+    useEffect(() => {
+        if (writeError) {
+            handleVerifyError(writeError.message);
         }
+    }, [writeError]);
 
-        if (!foundTicket) {
-            setCheckInResult({
-                success: false,
-                message: '找不到此票券'
-            });
-            setTimeout(() => setCheckInResult(null), 3000);
-            return;
-        }
-
-        if (foundTicket.used) {
-            setCheckInResult({
-                success: false,
-                message: '此票券已被使用'
-            });
-            setTimeout(() => setCheckInResult(null), 3000);
-            return;
-        }
-
-        // 標記為已使用
-        foundTicket.used = true;
-        localStorage.setItem('mockPurchases', JSON.stringify(purchases));
-
-        const event = mockEvents.find(e => e.id === foundPurchase.eventId);
-
+    // 處理驗票成功
+    const handleVerifySuccess = (ticketId) => {
         const checkIn = {
-            ticketId: foundTicket.ticketId,
-            eventId: foundPurchase.eventId,
-            eventName: foundPurchase.eventName,
+            ticketId: ticketId,
             checkInTime: new Date().toISOString(),
-            location: event?.location || '未知地點'
+            verifier: address,
+            txHash: hash
         };
 
         const newHistory = [checkIn, ...checkInHistory];
-        localStorage.setItem('mockCheckInHistory', JSON.stringify(newHistory));
+        localStorage.setItem('checkInHistory', JSON.stringify(newHistory));
         setCheckInHistory(newHistory);
 
         setCheckInResult({
             success: true,
-            message: '簽到成功！',
+            message: '驗票成功！票券已核銷',
             data: checkIn
         });
 
-        setScanInput('');
-        setTimeout(() => setCheckInResult(null), 3000);
+        setIsVerifying(false);
+        setTicketIdInput('');
+
+        // 5 秒後清除結果
+        setTimeout(() => {
+            setCheckInResult(null);
+        }, 5000);
+    };
+
+    // 處理驗票失敗
+    const handleVerifyError = (errorMessage) => {
+        let message = '驗票失敗';
+
+        if (errorMessage.includes('Only ticket owner')) {
+            message = '您不是此票券的擁有者';
+        } else if (errorMessage.includes('already used')) {
+            message = '此票券已被使用';
+        } else if (errorMessage.includes('rejected')) {
+            message = '交易被拒絕';
+        }
+
+        setCheckInResult({
+            success: false,
+            message: message,
+            error: errorMessage
+        });
+
+        setIsVerifying(false);
+
+        setTimeout(() => {
+            setCheckInResult(null);
+        }, 5000);
+    };
+
+    // 調用智慧合約驗票
+    const handleVerifyTicket = async () => {
+        if (!isConnected) {
+            alert('請先連接錢包');
+            return;
+        }
+
+        if (!ticketIdInput.trim()) {
+            alert('請輸入付款識別碼');
+            return;
+        }
+
+        if (ticketIdInput.trim().length !== 66 || !ticketIdInput.startsWith('0x')) {
+            alert('付款識別碼格式錯誤（應為 0x 開頭的 66 字元）');
+            return;
+        }
+
+        try {
+            setIsVerifying(true);
+            setCheckInResult(null);
+
+            // 調用智慧合約
+            writeContract({
+                address: CONTRACT_ADDRESS,
+                abi: CONTRACT_ABI,
+                functionName: 'verifyTicket',
+                args: [ticketIdInput.trim()],
+            });
+
+        } catch (err) {
+            console.error('驗票錯誤:', err);
+            handleVerifyError(err.message);
+        }
+    };
+
+    // 模擬掃描 QR Code（實際應使用相機 API）
+    const handleScan = () => {
+        setScanning(true);
+
+        // 模擬掃描過程（實際應使用 QR code 掃描庫）
+        setTimeout(() => {
+            // 從 localStorage 獲取購買記錄來模擬掃描到票券
+            const purchases = JSON.parse(localStorage.getItem('purchases') || '[]');
+
+            if (purchases.length === 0) {
+                alert('沒有找到票券記錄（演示用）');
+                setScanning(false);
+                return;
+            }
+
+            // 找到第一張票券的 ticketId
+            let foundTicketId = null;
+            for (const purchase of purchases) {
+                if (purchase.tickets && purchase.tickets.length > 0) {
+                    foundTicketId = purchase.tickets[0].ticketId;
+                    break;
+                }
+            }
+
+            if (foundTicketId) {
+                setTicketIdInput(foundTicketId);
+            }
+
+            setScanning(false);
+        }, 1500);
     };
 
     return (
@@ -162,11 +189,26 @@ export default function CheckInPage() {
             <div className="max-w-4xl mx-auto">
                 {/* 標題 */}
                 <div className="mb-8 text-center">
-                    <h1 className="text-4xl font-bold mb-2">活動簽到</h1>
-                    <p className="text-gray-400">掃描票券 QR Code 進行簽到驗證</p>
+                    <h1 className="text-4xl font-bold mb-2">活動驗票</h1>
+                    <p className="text-gray-400">掃描或輸入付款識別碼進行票券驗證</p>
+                    {!isConnected && (
+                        <div className="mt-4 p-4 bg-yellow-900/20 border border-yellow-500/50 rounded-lg">
+                            <p className="text-yellow-400 flex items-center justify-center gap-2">
+                                <Wallet size={20} />
+                                請先連接錢包才能進行驗票
+                            </p>
+                        </div>
+                    )}
+                    {isConnected && (
+                        <div className="mt-4 p-3 bg-green-900/20 border border-green-500/50 rounded-lg">
+                            <p className="text-green-400 text-sm">
+                                已連接: {address?.slice(0, 6)}...{address?.slice(-4)}
+                            </p>
+                        </div>
+                    )}
                 </div>
 
-                {/* 掃描區域 */}
+                {/* 掃描/輸入區域 */}
                 <div className="bg-gradient-to-br from-blue-900/30 to-purple-900/30 backdrop-blur-sm border border-white/10 rounded-xl p-8 mb-8">
                     <div className="space-y-6">
                         {/* 掃描器模擬 */}
@@ -191,10 +233,10 @@ export default function CheckInPage() {
                         {/* 掃描按鈕 */}
                         <button
                             onClick={handleScan}
-                            disabled={scanning}
-                            className={`w-full py-4 rounded-lg font-bold text-lg transition-all flex items-center justify-center gap-3 ${scanning
-                                    ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
-                                    : 'bg-blue-600 hover:bg-blue-700 text-white hover:shadow-lg hover:shadow-blue-500/50'
+                            disabled={scanning || !isConnected}
+                            className={`w-full py-4 rounded-lg font-bold text-lg transition-all flex items-center justify-center gap-3 ${scanning || !isConnected
+                                ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
+                                : 'bg-blue-600 hover:bg-blue-700 text-white hover:shadow-lg hover:shadow-blue-500/50'
                                 }`}
                         >
                             <Scan size={24} />
@@ -203,34 +245,57 @@ export default function CheckInPage() {
 
                         {/* 手動輸入 */}
                         <div className="pt-6 border-t border-white/10">
-                            <p className="text-sm text-gray-400 mb-3">或手動輸入票券 ID：</p>
-                            <div className="flex gap-2">
+                            <p className="text-sm text-gray-400 mb-3">或手動輸入付款識別碼（bytes32）：</p>
+                            <div className="space-y-3">
                                 <input
                                     type="text"
-                                    value={scanInput}
-                                    onChange={(e) => setScanInput(e.target.value)}
-                                    placeholder="TICKET-xxxxx"
-                                    className="flex-1 px-4 py-3 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:border-blue-500 transition-colors"
-                                    onKeyPress={(e) => e.key === 'Enter' && handleManualCheckIn()}
+                                    value={ticketIdInput}
+                                    onChange={(e) => setTicketIdInput(e.target.value)}
+                                    placeholder="0x..."
+                                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:border-blue-500 transition-colors font-mono text-sm"
+                                    onKeyPress={(e) => e.key === 'Enter' && handleVerifyTicket()}
+                                    disabled={!isConnected || isVerifying || isPending || isConfirming}
                                 />
                                 <button
-                                    onClick={handleManualCheckIn}
-                                    className="px-6 py-3 bg-green-600 hover:bg-green-700 rounded-lg font-medium transition-colors"
+                                    onClick={handleVerifyTicket}
+                                    disabled={!isConnected || isVerifying || isPending || isConfirming || !ticketIdInput.trim()}
+                                    className={`w-full px-6 py-3 rounded-lg font-medium transition-colors flex items-center justify-center gap-2 ${!isConnected || isVerifying || isPending || isConfirming || !ticketIdInput.trim()
+                                        ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
+                                        : 'bg-green-600 hover:bg-green-700 text-white'
+                                        }`}
                                 >
-                                    確認
+                                    {isVerifying || isPending ? (
+                                        <>
+                                            <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                                            <span>等待簽名...</span>
+                                        </>
+                                    ) : isConfirming ? (
+                                        <>
+                                            <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                                            <span>交易確認中...</span>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <CheckCircle size={20} />
+                                            <span>驗證票券</span>
+                                        </>
+                                    )}
                                 </button>
                             </div>
+                            <p className="text-xs text-gray-500 mt-2">
+                                ⓘ 付款識別碼格式：0x 開頭的 66 字元（包含 0x）
+                            </p>
                         </div>
                     </div>
                 </div>
 
-                {/* 簽到結果 */}
+                {/* 驗票結果 */}
                 {checkInResult && (
                     <div className={`mb-8 p-6 rounded-xl border-2 ${checkInResult.success
-                            ? 'bg-green-900/20 border-green-500'
-                            : 'bg-red-900/20 border-red-500'
+                        ? 'bg-green-900/20 border-green-500'
+                        : 'bg-red-900/20 border-red-500'
                         }`}>
-                        <div className="flex items-center gap-4">
+                        <div className="flex items-start gap-4">
                             {checkInResult.success ? (
                                 <CheckCircle size={48} className="text-green-500 flex-shrink-0" />
                             ) : (
@@ -243,26 +308,38 @@ export default function CheckInPage() {
                                 </h3>
                                 {checkInResult.success && checkInResult.data && (
                                     <div className="text-sm space-y-1">
-                                        <p className="text-gray-300">活動：{checkInResult.data.eventName}</p>
+                                        <p className="text-gray-300 font-mono text-xs break-all">
+                                            票券: {checkInResult.data.ticketId}
+                                        </p>
                                         <p className="text-gray-400">
                                             時間：{new Date(checkInResult.data.checkInTime).toLocaleString('zh-TW')}
                                         </p>
+                                        {checkInResult.data.txHash && (
+                                            <p className="text-gray-400 text-xs break-all">
+                                                交易: {checkInResult.data.txHash}
+                                            </p>
+                                        )}
                                     </div>
+                                )}
+                                {checkInResult.error && (
+                                    <p className="text-xs text-red-300 mt-2 opacity-70">
+                                        {checkInResult.error}
+                                    </p>
                                 )}
                             </div>
                         </div>
                     </div>
                 )}
 
-                {/* 簽到歷史 */}
+                {/* 驗票歷史 */}
                 <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl p-6">
                     <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
                         <CheckCircle size={24} className="text-green-500" />
-                        <span>簽到記錄</span>
+                        <span>驗票記錄</span>
                     </h2>
 
                     {checkInHistory.length === 0 ? (
-                        <p className="text-gray-400 text-center py-8">尚無簽到記錄</p>
+                        <p className="text-gray-400 text-center py-8">尚無驗票記錄</p>
                     ) : (
                         <div className="space-y-3">
                             {checkInHistory.map((record, index) => (
@@ -270,16 +347,28 @@ export default function CheckInPage() {
                                     key={index}
                                     className="bg-white/5 border border-white/10 rounded-lg p-4 hover:bg-white/10 transition-colors"
                                 >
-                                    <div className="flex items-start justify-between">
-                                        <div className="space-y-1">
-                                            <h3 className="font-medium">{record.eventName}</h3>
-                                            <p className="text-sm text-gray-400 font-mono">{record.ticketId}</p>
-                                            <p className="text-xs text-gray-500">{record.location}</p>
+                                    <div className="space-y-2">
+                                        <div className="flex items-start justify-between">
+                                            <div className="flex-1">
+                                                <p className="text-sm text-gray-400 font-mono break-all">
+                                                    {record.ticketId}
+                                                </p>
+                                            </div>
+                                            <div className="text-right text-sm text-gray-400 ml-4">
+                                                <p>{new Date(record.checkInTime).toLocaleDateString('zh-TW')}</p>
+                                                <p>{new Date(record.checkInTime).toLocaleTimeString('zh-TW')}</p>
+                                            </div>
                                         </div>
-                                        <div className="text-right text-sm text-gray-400">
-                                            <p>{new Date(record.checkInTime).toLocaleDateString('zh-TW')}</p>
-                                            <p>{new Date(record.checkInTime).toLocaleTimeString('zh-TW')}</p>
-                                        </div>
+                                        {record.txHash && (
+                                            <p className="text-xs text-gray-500 break-all">
+                                                交易: {record.txHash}
+                                            </p>
+                                        )}
+                                        {record.verifier && (
+                                            <p className="text-xs text-gray-500">
+                                                驗證者: {record.verifier.slice(0, 6)}...{record.verifier.slice(-4)}
+                                            </p>
+                                        )}
                                     </div>
                                 </div>
                             ))}
