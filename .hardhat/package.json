@@ -1,0 +1,16 @@
+{
+  "name": "hardhat",
+  "version": "1.0.0",
+  "private": true,
+  "author": "SN-Koarashi",
+  "license": "UNLICENSED",
+  "description": "",
+  "dependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^6.1.0",
+    "dotenv": "^17.2.2",
+    "ethers": "^6.15.0",
+    "hardhat": "^2.26.0",
+    "wagmi": "^2.17.5"
+  },
+  "devDependencies": {}
+}
