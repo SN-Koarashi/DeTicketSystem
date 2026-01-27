@@ -60,13 +60,13 @@ export const calculateHash = async (data) => {
 
 export const calculateABIHash = async (cid, contentHash, organizer) => {
     // 對應 Solidity 的 abi.encodePacked
-    const packed = ethers.utils.solidityPack(
+    const packed = ethers.solidityPacked(
         ["string", "bytes32", "address"],
         [cid, contentHash, organizer]
     );
 
     // 計算 keccak256
-    const eventId = ethers.utils.keccak256(packed);
+    const eventId = ethers.keccak256(packed);
 
     return eventId;
 };

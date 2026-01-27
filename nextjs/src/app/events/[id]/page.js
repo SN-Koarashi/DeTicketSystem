@@ -63,13 +63,76 @@ export default function EventDetailPage() {
 
         setIsPurchasing(true);
 
-        const cid = event.id;
-        const dataHash = await calculateHash(ipfsData);
-        const organizer = ipfsData.organizer;
+        try {
+            // 步驟 1: 計算活動識別碼
+            const cid = event.id;
+            const dataHash = await calculateHash(ipfsData);
+            const organizer = ipfsData.organizer;
+            const eventId = await calculateABIHash(cid, dataHash, organizer);
+            console.log('Event ID:', eventId);
 
-        const eventId = await calculateABIHash(cid, dataHash, organizer);
+            // 步驟 2: 生成隨機票券 ID (nonce)
+            const ticketNonce = Math.floor(Math.random() * 1000000000);
+            console.log('Ticket Nonce:', ticketNonce);
 
+            // 步驟 3: 與智慧合約互動
+            const { BrowserProvider, Contract } = await import('ethers');
 
+            // 從環境變數取得智慧合約地址
+            const contractAddress = process.env.NEXT_PUBLIC_SMART_CONTRACT_ADDRESS;
+
+            // 智慧合約 ABI（purchaseTicket 函數）
+            const contractABI = [
+                {
+                    "inputs": [
+                        { "internalType": "bytes32", "name": "eventId", "type": "bytes32" },
+                        { "internalType": "uint256", "name": "ticketNonce", "type": "uint256" }
+                    ],
+                    "name": "purchaseTicket",
+                    "outputs": [
+                        { "internalType": "bytes32", "name": "paymentId", "type": "bytes32" }
+                    ],
+                    "stateMutability": "payable",
+                    "type": "function"
+                }
+            ];
+
+            // 獲取 provider 和 signer
+            const provider = new BrowserProvider(window.ethereum);
+            const signer = await provider.getSigner();
+
+            // 創建合約實例
+            const contract = new Contract(contractAddress, contractABI, signer);
+
+            // 調用 purchaseTicket 函數（需要支付 ETH）
+            const tx = await contract.purchaseTicket(eventId, ticketNonce, {
+                value: 0 // 合約會根據 Chainlink 價格自動計算需要的 ETH
+            });
+
+            console.log('Transaction sent:', tx.hash);
+
+            // 等待交易確認
+            const receipt = await tx.wait();
+            console.log('Transaction confirmed:', receipt.hash);
+
+            // 從事件日誌中取得 paymentId
+            const paymentId = receipt.logs[0].topics[1];
+            console.log('Payment ID:', paymentId);
+
+            // 步驟 4: 購票成功
+            setPurchaseComplete(true);
+
+            // 3秒後導向「我的票券」頁面
+            setTimeout(() => {
+                router.push('/my-tickets');
+            }, 3000);
+
+        } catch (error) {
+            console.error('購票失敗:', error);
+            alert('購票失敗: ' + error.message);
+        } finally {
+            setIsPurchasing(false);
+        }
     };
 
     if (purchaseComplete) {
