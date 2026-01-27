@@ -19,8 +19,8 @@ let fs;
 async function initHelia() {
     try {
         // 創建持久化的 blockstore 和 datastore
-        const blockstore = new FsBlockstore('./ipfs-data/blocks');
-        const datastore = new FsDatastore('./ipfs-data/datastore');
+        const blockstore = new FsBlockstore('./data/blocks');
+        const datastore = new FsDatastore('./data/datastore');
 
         helia = await createHelia({
             blockstore,

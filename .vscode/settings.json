@@ -4,6 +4,7 @@
         "helia",
         "ipfs",
         "keccak",
+        "libp",
         "rainbowkit",
         "unixfs",
         "wagmi"
