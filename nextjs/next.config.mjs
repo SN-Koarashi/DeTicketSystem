@@ -16,16 +16,32 @@ const nextConfig = {
         NEXT_PUBLIC_SMART_CONTRACT_ADDRESS: "0xEB7068E9B6f3c3858F4539Df9964721F71a703f8"
     },
     rewrites: async function () {
-        return [
-            {
-                source: '/api/:path*',
-                destination: 'http://localhost:8081/:path*',
-            },
-            {
-                source: '/ipfs/:path*',
-                destination: 'http://localhost:3001/:path*',
-            },
-        ];
+        if (process.env.NODE_ENV === 'production') {
+            console.log("Production rewrite rules applied.");
+            return [
+                {
+                    source: '/api/:path*',
+                    destination: 'https://ncu-bccs-api.snks.cc/:path*',
+                },
+                {
+                    source: '/ipfs/:path*',
+                    destination: 'https://ncu-bccs-api.snks.cc/:path*',
+                },
+            ];
+        }
+        else {
+            console.log("Development rewrite rules applied.");
+            return [
+                {
+                    source: '/api/:path*',
+                    destination: 'http://localhost:8081/:path*',
+                },
+                {
+                    source: '/ipfs/:path*',
+                    destination: 'http://localhost:3001/:path*',
+                },
+            ];
+        }
     }
 };
 
