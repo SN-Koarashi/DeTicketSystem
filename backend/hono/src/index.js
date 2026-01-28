@@ -7,7 +7,6 @@ const app = new Hono();
 
 app.use('/*', async (c, next) => {
   let db;
-  let dbNoCache;
 
   db = new DatabaseConnection(
     "192.168.1.112",
