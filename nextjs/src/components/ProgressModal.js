@@ -1,4 +1,4 @@
-import { FileText, Wallet, Upload, CheckCircle, Loader2 } from 'lucide-react';
+import { FileText, Wallet, Upload, CheckCircle, Loader2, Pin } from 'lucide-react';
 
 export default function Modal({
     submitStep = "idle"
@@ -6,9 +6,10 @@ export default function Modal({
     const steps = [
         { key: 'signing', label: '簽署訊息', icon: Wallet },
         { key: 'preparing', label: '準備資料', icon: FileText },
-        { key: 'ipfs', label: '上傳至 IPFS', icon: Upload },
-        { key: 'database', label: '儲存至資料庫', icon: FileText },
+        { key: 'ipfs', label: '暫存至 IPFS', icon: Upload },
         { key: 'contract', label: '智慧合約上鏈', icon: Wallet },
+        { key: 'ipfs-pin', label: '持久化 IPFS 資料', icon: Pin },
+        { key: 'database', label: '儲存至資料庫', icon: FileText },
         { key: 'complete', label: '完成', icon: CheckCircle }
     ];
 

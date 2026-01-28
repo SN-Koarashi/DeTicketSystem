@@ -142,7 +142,7 @@ export default function CreateEventPage() {
         return keccak256(toUtf8Bytes(JSON.stringify(data)));
     };
 
-    // 上傳到 IPFS
+    // 上傳到 IPFS（暫存，不 pin）
     const uploadToIPFS = async (data) => {
         const jsonData = JSON.stringify(data);
         const response = await fetch('/ipfs/upload', {
@@ -154,17 +154,54 @@ export default function CreateEventPage() {
         });
 
         if (response.ok === false) {
+            const result = await response.json();
             throw new Error(result.error || 'Failed to upload data to IPFS');
         }
 
         const result = await response.json();
+        return {
+            cid: result?.cid,
+            pinned: result?.pinned || false
+        };
+    };
 
-        return result?.cid;
+    // Pin IPFS 資料（確認交易成功後）
+    const pinIPFS = async (cid) => {
+        const response = await fetch(`/ipfs/pin/${cid}`, {
+            method: 'POST',
+        });
+
+        if (response.ok === false) {
+            const result = await response.json();
+            console.error('Pin 失敗:', result.error);
+            // Pin 失敗不阻塞流程，只記錄警告
+            return false;
+        }
+
+        const result = await response.json();
+        console.log('📌 IPFS 資料已 pin:', cid);
+        return true;
+    };
+
+    // Unpin IPFS 資料（交易失敗時清理）
+    const unpinIPFS = async (cid) => {
+        try {
+            const response = await fetch(`/ipfs/pin/${cid}`, {
+                method: 'DELETE',
+            });
+
+            if (response.ok) {
+                console.log('🗑️  IPFS 資料已 unpin:', cid);
+            }
+        } catch (error) {
+            console.error('Unpin 失敗:', error);
+            // Unpin 失敗不阻塞流程
+        }
     };
 
     // 上傳到資料庫
-    const uploadToDatabase = async (cid, summary) => {
-        const jsonData = JSON.stringify({ cid, summary });
+    const uploadToDatabase = async (cid, summary, eventId = null) => {
+        const jsonData = JSON.stringify({ cid, summary, eventId });
         const response = await fetch('/api/v1/events/create', {
             method: 'POST',
             headers: {
@@ -269,16 +306,34 @@ export default function CreateEventPage() {
                 createdAt: new Date().toISOString()
             };
 
-            // 步驟 3: 上傳到 IPFS
+            // 步驟 3: 上傳到 IPFS（暫存，不 pin）
             setSubmitStep('ipfs');
-            const cid = await uploadToIPFS(fullEventData);
-            console.log('IPFS CID:', cid);
+            const { cid, pinned } = await uploadToIPFS(fullEventData);
+            console.log('IPFS CID:', cid, '(pinned:', pinned, ')');
 
             // 步驟 4: 計算資料 hash
             const dataHash = await calculateHash(fullEventData);
             console.log('Data Hash:', dataHash);
 
-            // 步驟 5: 上傳摘要到傳統資料庫
+            // 步驟 5: 與智慧合約互動（先執行，避免後續需要回滾資料庫）
+            setSubmitStep('contract');
+            let eventId;
+            try {
+                const result = await interactWithContract(cid, dataHash, address, parseInt(formData.totalTickets), parseInt(formData.priceCent));
+                eventId = result.eventId;
+                console.log('Event ID:', eventId);
+            } catch (contractError) {
+                console.error('智慧合約互動失敗:', contractError);
+                // 智慧合約失敗，清理 IPFS 暫存資料
+                await unpinIPFS(cid);
+                throw new Error('智慧合約互動失敗: ' + contractError.message);
+            }
+
+            // 步驟 6: Pin IPFS 資料（智慧合約成功後持久化）
+            setSubmitStep('ipfs-pin');
+            await pinIPFS(cid);
+
+            // 步驟 7: 上傳摘要到傳統資料庫（只在合約成功後執行）
             setSubmitStep('database');
             const summary = {
                 name: formData.name,
@@ -289,14 +344,15 @@ export default function CreateEventPage() {
                 image: formData.image,
                 category: formData.category
             };
-            await uploadToDatabase(cid, summary);
+            try {
+                await uploadToDatabase(cid, summary, eventId);
+            } catch (dbError) {
+                console.error('資料庫寫入失敗，但合約已成功:', dbError);
+                // 資料庫失敗但合約已成功，記錄警告但繼續
+                console.warn('活動已在鏈上建立，eventId:', eventId);
+            }
 
-            // 步驟 6: 與智慧合約互動
-            setSubmitStep('contract');
-            const { eventId } = await interactWithContract(cid, dataHash, address, parseInt(formData.totalTickets), parseInt(formData.priceCent));
-            console.log('Event ID:', eventId);
-
-            // 步驟 7: 完成
+            // 步驟 8: 完成
             setSubmitStep('complete');
             setEventData({
                 eventId,
