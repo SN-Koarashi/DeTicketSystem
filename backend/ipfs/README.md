@@ -6,8 +6,12 @@
 
 - ✅ 儲存 JSON 數據到 IPFS
 - ✅ 通過 CID 檢索數據
-- ✅ 持久化儲存
+- ✅ 持久化儲存（Pin 機制）
+- ✅ 兩階段提交（上傳 + Pin）
+- ✅ 支援 Unpin 清理未使用資料
+- ✅ 列出所有已 Pin 的資料
 - ✅ RESTful API 設計
+- ✅ 帶超時機制的資料讀取
 
 ## 安裝
 
@@ -31,9 +35,11 @@ npm run dev
 
 ## API 端點
 
-### 1. 上傳 JSON 數據
+### 1. 上傳 JSON 數據（暫存）
 
 **端點:** `POST /upload`
+
+**說明:** 上傳數據到 IPFS 但不立即 Pin，資料會暫存在 blockstore 中。建議在區塊鏈交易成功後再呼叫 `/pin/:cid` 來持久化資料。
 
 **請求範例:**
 
@@ -53,11 +59,115 @@ curl -X POST http://localhost:3001/upload \
 {
   "success": true,
   "cid": "bafkreihdwdcefgh4dqkjv67uzcmw7ojee6xedzdetojuzjevtenxquvyku",
-  "size": 89
+  "size": 89,
+  "pinned": false,
+  "message": "資料已暫存，請在交易成功後 pin"
 }
 ```
 
-### 2. 獲取 JSON 數據
+##說明:** 從 IPFS 讀取數據，帶有 3 秒超時機制。
+
+**請求範例:**
+
+```bash
+curl http://localhost:3001/data/bafkreihdwdcefgh4dqkjv67uzcmw7ojee6xedzdetojuzjevtenxquvyku
+```
+
+**回應範例:**
+
+```json
+{
+  "success": true,
+  "cid": "bafkreihdwdcefgh4dqkjv67uzcmw7ojee6xedzdetojuzjevtenxquvyku",
+  "data": {
+    "eventId": "123",
+    "name": "測試活動",
+    "description": "這是一個測試活動"
+  }
+}
+```
+
+**錯誤回應（找不到 CID）:**
+
+```json
+{
+  "error": "找不到指定的 CID",
+  "message": "該 CID 不存在或尚未同步"
+}
+```
+
+### 2. Pin 資料（固定）
+
+**端點:** `POST /pin/:cid`
+
+**說明:** 當區塊鏈交易成功時，可以 Pin 資料，讓資料持久化儲存。
+
+**請求範例:**
+
+```bash
+curl -X POST http://localhost:3001/pin/bafkreihdwdcefgh4dqkjv67uzcmw7ojee6xedzdetojuzjevtenxquvyku
+```
+
+**回應範例:**
+
+```json
+{
+  "success": true,
+  "cid": "bafkreihdwdcefgh4dqkjv67uzcmw7ojee6xedzdetojuzjevtenxquvyku",
+  "pinned": true,
+  "message": "資料已持久化並驗證"
+}
+```
+
+### 3. Unpin 資料（清理）
+
+**端點:** `DELETE /pin/:cid`
+
+**說明:** 當區塊鏈交易失敗時，可以 Unpin 資料，讓垃圾回收機制清理未使用的區塊。
+
+**請求範例:**
+
+```bash
+curl -X DELETE http://localhost:3001/pin/bafkreihdwdcefgh4dqkjv67uzcmw7ojee6xedzdetojuzjevtenxquvyku
+```
+
+**回應範例:**
+
+```json
+{
+  "success": true,
+  "cid": "bafkreihdwdcefgh4dqkjv67uzcmw7ojee6xedzdetojuzjevtenxquvyku",
+  "pinned": false,
+  "message": "資料已標記為可清理"
+}
+```
+
+### 4. 列出所有 Pin 的資料
+
+**端點:** `GET /pins`
+
+**說明:** 列出所有已 Pin（持久化）的資料 CID。
+
+**請求範例:**
+
+```bash
+curl http://localhost:3001/pins
+```
+
+**回應範例:**
+
+```json
+{
+  "success": true,
+  "count": 2,
+  "pins": [
+    "bafkreihdwdcefgh4dqkjv67uzcmw7ojee6xedzdetojuzjevtenxquvyku",
+    "bafkreigdvvzjvky5yqvs4bxgwklcjrtjm6h2pqvjsw6zqhxqzvxd7mkjy4"
+  ]
+}
+```
+
+### 5. 獲取 JSON 數據
 
 **端點:** `GET /data/:cid`
 
@@ -81,7 +191,7 @@ curl http://localhost:3001/data/bafkreihdwdcefgh4dqkjv67uzcmw7ojee6xedzdetojuzje
 }
 ```
 
-### 3. 健康檢查
+### 6. 健康檢查
 
 **端點:** `GET /health`
 
@@ -100,53 +210,21 @@ curl http://localhost:3001/health
   "peerId": "12D3KooWGjGvULY..."
 }
 ```
+兩階段提交流程
 
-## 資料儲存
+為了確保區塊鏈交易和 IPFS 儲存的一致性，建議使用兩階段提交：
 
-所有 IPFS 數據都會持久化儲存在 `./data` 目錄中：
-- `./data/blocks` - 區塊儲存
-- `./data/datastore` - 資料儲存
+1. **階段一：暫存資料**
+   - 先呼叫 `POST /upload` 上傳資料到 IPFS（不 Pin）
+   - 取得 CID 並將其寫入區塊鏈合約
 
-## 環境變數
+2. **階段二：持久化**
+   - 如果區塊鏈交易**成功**：呼叫 `POST /pin/:cid` 來持久化資料
+   - 如果區塊鏈交易**失敗**：呼叫 `DELETE /pin/:cid` 來清理資料
 
-- `PORT` - 伺服器端口（預設: 3001）
-
-## 前端整合範例
-
-```javascript
-// 上傳數據到 IPFS
-async function uploadToIPFS(data) {
-  const response = await fetch('http://localhost:3001/upload', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(data),
-  });
-  
-  const result = await response.json();
-  return result.cid;
-}
-
-// 從 IPFS 獲取數據
-async function getFromIPFS(cid) {
-  const response = await fetch(`http://localhost:3001/data/${cid}`);
-  const result = await response.json();
-  return result.data;
-}
-
-// 使用範例
-const cid = await uploadToIPFS({
-  eventId: '123',
-  name: '音樂會',
-  date: '2026-02-01'
-});
-
-console.log('上傳成功，CID:', cid);
-
-const data = await getFromIPFS(cid);
-console.log('獲取的數據:', data);
-```
+這樣可以避免：
+- 區塊鏈交易失敗但 IPFS 資料已持久化（浪費儲存空間）
+- 區塊鏈交易成功但 IPFS 資料被垃圾回收（資料遺失）
 
 ## 注意事項
 
