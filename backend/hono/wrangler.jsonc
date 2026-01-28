@@ -6,7 +6,13 @@
     "compatibility_flags": [
         "nodejs_compat"
     ],
-    "vars": {},
+    "vars": {
+        "DB_HOST": "192.168.1.112",
+        "DB_DATABASE": "de_ticket",
+        "DB_USERNAME": "root_ticket",
+        "DB_PASSWORD": "password",
+        "DB_PORT": 3306,
+    },
     "observability": {
         "logs": {
             "enabled": true,

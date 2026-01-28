@@ -9,11 +9,11 @@ app.use('/*', async (c, next) => {
   let db;
 
   db = new DatabaseConnection(
-    "192.168.1.112",
-    "de_ticket",
-    "root_ticket",
-    "password",
-    3306
+    c.env.DB_HOST,
+    c.env.DB_DATABASE,
+    c.env.DB_USERNAME,
+    c.env.DB_PASSWORD,
+    c.env.DB_PORT
   );
 
   c.set('db', db);
