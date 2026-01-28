@@ -1,9 +1,10 @@
 import { Suspense } from 'react';
 import CheckInPage from './CheckInPage';
+import CheckInSkeleton from './CheckInSkeleton';
 
 export default function Page() {
     return (
-        <Suspense fallback={<div>Loading...</div>}>
+        <Suspense fallback={<CheckInSkeleton />}>
             <CheckInPage />
         </Suspense>
     );
