@@ -26,7 +26,6 @@
 
 ### Chainlink Oracle 整合
 - **ETH/USD 價格查詢**：使用 Chainlink Price Feed 取得即時 ETH 價格
-- **時間戳**：使用 `block.timestamp` 記錄票券使用時間
 
 ## 合約架構
 
