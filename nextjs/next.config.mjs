@@ -21,11 +21,11 @@ const nextConfig = {
             return [
                 {
                     source: '/api/:path*',
-                    destination: 'https://ncu-bccs-api.snks.cc/:path*',
+                    destination: 'https://ncu-bccs-api.snks.cc/hono/:path*',
                 },
                 {
                     source: '/ipfs/:path*',
-                    destination: 'https://ncu-bccs-api.snks.cc/:path*',
+                    destination: 'https://ncu-bccs-api.snks.cc/ipfs/:path*',
                 },
             ];
         }
