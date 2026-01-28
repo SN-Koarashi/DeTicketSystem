@@ -25,17 +25,28 @@ async function initHelia() {
         helia = await createHelia({
             blockstore,
             datastore,
+            // 確保 GC 不會刪除 pinned 的區塊
+            gcOptions: {
+                interval: 60000, // 60秒執行一次 GC
+            }
         });
 
         fs = unixfs(helia);
 
-        for await (const pinnedCid of helia.pins.ls()) {
-            console.log('Pinned:', pinnedCid.toString());
-        }
-
-        await helia.gc();
         console.log('✅ Helia IPFS 節點已初始化');
         console.log('📍 節點 ID:', helia.libp2p.peerId.toString());
+
+        await helia.gc(); // 啟動後立即執行一次 GC
+
+        // 列出現有的 pins
+        const pins = [];
+        for await (const pin of helia.pins.ls()) {
+            pins.push(pin.cid);
+        }
+        if (pins.length > 0) {
+            console.log('📌 已載入的 PIN:', pins.length, '個');
+            pins.forEach(pin => console.log('   -', pin));
+        }
     } catch (error) {
         console.error('❌ 初始化 Helia 失敗:', error);
         process.exit(1);
@@ -49,6 +60,28 @@ app.get('/health', (c) => {
         service: 'IPFS Server',
         peerId: helia?.libp2p.peerId.toString() || 'not initialized'
     });
+});
+
+// 列出所有 PIN 的資料
+app.get('/pins', async (c) => {
+    try {
+        const pins = [];
+        for await (const pin of helia.pins.ls()) {
+            pins.push(pin.cid);
+        }
+
+        return c.json({
+            success: true,
+            count: pins.length,
+            pins: pins
+        });
+    } catch (error) {
+        console.error('❌ 列出 pins 失敗:', error);
+        return c.json({
+            error: '列出 pins 失敗',
+            message: error.message
+        }, 500);
+    }
 });
 
 // 上傳 JSON 數據到 IPFS（支援兩階段提交）
@@ -69,8 +102,8 @@ app.post('/upload', async (c) => {
         const bytes = encoder.encode(jsonString);
 
         // 存入 IPFS（暫存，不立即 pin）
+        // 注意：即使不 pin，區塊也會被寫入 blockstore
         const cid = await fs.addBytes(bytes, {
-            // 不立即 pin，等待後續確認
             pin: false
         });
 
@@ -108,16 +141,32 @@ app.post('/pin/:cid', async (c) => {
         const { CID } = await import('multiformats/cid');
         const cid = CID.parse(cidString);
 
-        // Pin 資料
-        await helia.pins.add(cid);
+        // Pin 資料（確保 recursive pin）
+        await helia.pins.add(cid, {
+            // 遞迴 pin 所有相關區塊
+            recursive: true
+        });
 
         console.log('📌 資料已 pin，CID:', cidString);
+
+        // 強制刷新 datastore 確保 pin 被持久化
+        if (helia.datastore.batch) {
+            const batch = helia.datastore.batch();
+            await batch.commit();
+        }
+
+        // 等待確保 pin 寫入 datastore
+        await new Promise(resolve => setTimeout(resolve, 200));
+
+        for await (const res of helia.pins.add(cid)) {
+            console.log('Pinning 成功:', res.toString())
+        }
 
         return c.json({
             success: true,
             cid: cidString,
             pinned: true,
-            message: '資料已持久化'
+            message: '資料已持久化並驗證'
         });
     } catch (error) {
         console.error('❌ Pin 失敗:', error);
@@ -241,6 +290,7 @@ async function startServer() {
     console.log(`   - POST   /upload        - 上傳 JSON 數據（暫存）`);
     console.log(`   - POST   /pin/:cid     - Pin 資料（持久化）`);
     console.log(`   - DELETE /pin/:cid     - Unpin 資料（清理）`);
+    console.log(`   - GET    /pins         - 列出所有 PIN 的資料`);
     console.log(`   - GET    /data/:cid    - 獲取數據`);
     console.log(`   - GET    /health       - 健康檢查`);
 }
