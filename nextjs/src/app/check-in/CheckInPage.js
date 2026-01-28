@@ -146,13 +146,15 @@ export default function CheckInPage() {
             // 創建合約實例
             const contract = new Contract(contractAddress, contractABI, signer);
 
-            // 先使用 callStatic 檢查驗票結果（不實際發送交易）
-            const canVerify = await contract.verifyTicket.staticCall(ticketIdInput.trim());
-            console.log('驗票檢查結果:', canVerify);
+            // ! 錢包會進行模擬交易，所以這裡應該不需要撰寫 callStatic 了
+            // ? 因為合約已經重新部署，改為使用 require 檢查失敗情況而不是直接返回 false
+            // // 先使用 callStatic 檢查驗票結果（不實際發送交易）
+            // const canVerify = await contract.verifyTicket.staticCall(ticketIdInput.trim());
+            // console.log('驗票檢查結果:', canVerify);
 
-            if (!canVerify) {
-                throw new Error('驗票失敗：票券可能已被使用或不存在');
-            }
+            // if (!canVerify) {
+            //     throw new Error('驗票失敗：票券可能已被使用或不存在');
+            // }
 
             // 調用 verifyTicket 函數
             const tx = await contract.verifyTicket(ticketIdInput.trim());
@@ -276,7 +278,7 @@ export default function CheckInPage() {
                                         </p>
                                         {checkInResult.data.txHash && (
                                             <p className="text-gray-400 text-xs break-all">
-                                                交易: {checkInResult.data.txHash}
+                                                交易: <a className="underline text-blue-400" href={`https://sepolia.etherscan.io/tx/${checkInResult.data.txHash}`} target="_blank" rel="noopener noreferrer">{checkInResult.data.txHash}</a>
                                             </p>
                                         )}
                                     </div>
@@ -321,7 +323,7 @@ export default function CheckInPage() {
                                         </div>
                                         {record.txHash && (
                                             <p className="text-xs text-gray-500 break-all">
-                                                交易: {record.txHash}
+                                                交易: <a className="underline text-blue-400" href={`https://sepolia.etherscan.io/tx/${record.txHash}`} target="_blank" rel="noopener noreferrer">{record.txHash}</a>
                                             </p>
                                         )}
                                         {record.verifier && (
