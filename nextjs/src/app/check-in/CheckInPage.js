@@ -90,8 +90,6 @@ export default function CheckInPage() {
             error: errorMessage
         });
 
-        setIsVerifying(false);
-
         setTimeout(() => {
             setCheckInResult(null);
         }, 5000);

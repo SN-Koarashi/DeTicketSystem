@@ -5,12 +5,13 @@ import { useAccount } from 'wagmi';
 import { useRouter, useParams } from 'next/navigation';
 import Image from 'next/image';
 import { calculateABIHash, calculateHash, categories, formatDate, getRemainingTickets, isEventSoldOut } from '@/lib/utils';
-import { Calendar, MapPin, Users, Tag, ArrowLeft, ShoppingCart, CheckCircle } from 'lucide-react';
+import { Calendar, MapPin, Users, Tag, ArrowLeft, ShoppingCart, CheckCircle, XCircle } from 'lucide-react';
 
 export default function EventDetailPage() {
     const params = useParams();
     const router = useRouter();
     const { address, isConnected } = useAccount();
+    const [purchaseResult, setPurchaseResult] = useState(null);
     const [event, setEvent] = useState(null);
     const [ipfsData, setIpfsData] = useState(null);
     const [quantity, setQuantity] = useState(1);
@@ -225,10 +226,29 @@ export default function EventDetailPage() {
 
         } catch (error) {
             console.error('購票失敗:', error);
-            alert('購票失敗: ' + error.message);
+            handlePurchaseError(error.message);
         } finally {
             setIsPurchasing(false);
         }
+    };
+
+    // 處理購票失敗
+    const handlePurchaseError = (errorMessage) => {
+        let message = '購票失敗';
+
+        if (errorMessage.includes('Tickets sold out')) {
+            message = '票券已售完';
+        }
+
+        setPurchaseResult({
+            success: false,
+            message: message,
+            error: errorMessage
+        });
+
+        setTimeout(() => {
+            setPurchaseResult(null);
+        }, 10000);
     };
 
     if (purchaseComplete) {
@@ -418,6 +438,47 @@ export default function EventDetailPage() {
                             )}
                         </div>
                     </div>
+
+                    {purchaseResult && (
+                        <div className={`mb-8 p-6 rounded-xl border-2 ${purchaseResult.success
+                            ? 'bg-green-900/20 border-green-500'
+                            : 'bg-red-900/20 border-red-500'
+                            }`}>
+                            <div className="flex items-start gap-4">
+                                {purchaseResult.success ? (
+                                    <CheckCircle size={48} className="text-green-500 flex-shrink-0" />
+                                ) : (
+                                    <XCircle size={48} className="text-red-500 flex-shrink-0" />
+                                )}
+                                <div className="flex-1">
+                                    <h3 className={`text-2xl font-bold mb-2 ${purchaseResult.success ? 'text-green-400' : 'text-red-400'
+                                        }`}>
+                                        {purchaseResult.message}
+                                    </h3>
+                                    {purchaseResult.success && purchaseResult.data && (
+                                        <div className="text-sm space-y-1">
+                                            <p className="text-gray-300 font-mono text-xs break-all">
+                                                票券: {purchaseResult.data.ticketId}
+                                            </p>
+                                            <p className="text-gray-400">
+                                                時間：{new Date(purchaseResult.data.checkInTime).toLocaleString('zh-TW')}
+                                            </p>
+                                            {purchaseResult.data.txHash && (
+                                                <p className="text-gray-400 text-xs break-all">
+                                                    交易: <a className="underline text-blue-400" href={`https://sepolia.etherscan.io/tx/${purchaseResult.data.txHash}`} target="_blank" rel="noopener noreferrer">{purchaseResult.data.txHash}</a>
+                                                </p>
+                                            )}
+                                        </div>
+                                    )}
+                                    {purchaseResult.error && (
+                                        <p className="text-xs text-red-300 mt-2 opacity-70 break-all">
+                                            {purchaseResult.error}
+                                        </p>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    )}
                 </div>
             </div>
         </div>
