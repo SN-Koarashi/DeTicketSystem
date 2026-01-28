@@ -344,7 +344,7 @@ function verifyTicket(
 - **Price Feed**: ETH/USD (Sepolia: `0x694AA1769357215DE4FAC081bf1f309aDC325306`)
 - **時間戳**: 使用 `block.timestamp`
 
-詳細合約文檔請參閱: [hardhat/CONTRACT_README.md](hardhat/CONTRACT_README.md)
+詳細合約文檔請參閱: [hardhat/README.md](hardhat/README.md)
 
 ## 專案結構
 
