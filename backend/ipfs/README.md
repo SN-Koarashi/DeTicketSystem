@@ -21,7 +21,7 @@ npm install
 npm start
 ```
 
-開發模式（支援熱重載）:
+開發模式:
 
 ```bash
 npm run dev
@@ -103,9 +103,9 @@ curl http://localhost:3001/health
 
 ## 資料儲存
 
-所有 IPFS 數據都會持久化儲存在 `./ipfs-data` 目錄中：
-- `./ipfs-data/blocks` - 區塊儲存
-- `./ipfs-data/datastore` - 資料儲存
+所有 IPFS 數據都會持久化儲存在 `./data` 目錄中：
+- `./data/blocks` - 區塊儲存
+- `./data/datastore` - 資料儲存
 
 ## 環境變數
 
@@ -167,11 +167,11 @@ PORT=3002 npm start
 
 ### 權限問題
 
-確保應用有權限創建 `./ipfs-data` 目錄。
+確保應用有權限創建 `./data` 目錄。
 
 ## 技術架構
 
-- **Express** - Web 框架
+- **Hono** - Web 框架
 - **Helia** - IPFS JavaScript 實現
 - **UnixFS** - 文件系統抽象層
 - **FsBlockstore/FsDatastore** - 持久化儲存
