@@ -437,48 +437,34 @@ export default function EventDetailPage() {
                                 </>
                             )}
                         </div>
-                    </div>
 
-                    {purchaseResult && (
-                        <div className={`mb-8 p-6 rounded-xl border-2 ${purchaseResult.success
-                            ? 'bg-green-900/20 border-green-500'
-                            : 'bg-red-900/20 border-red-500'
-                            }`}>
-                            <div className="flex items-start gap-4">
-                                {purchaseResult.success ? (
-                                    <CheckCircle size={48} className="text-green-500 flex-shrink-0" />
-                                ) : (
-                                    <XCircle size={48} className="text-red-500 flex-shrink-0" />
-                                )}
-                                <div className="flex-1">
-                                    <h3 className={`text-2xl font-bold mb-2 ${purchaseResult.success ? 'text-green-400' : 'text-red-400'
-                                        }`}>
-                                        {purchaseResult.message}
-                                    </h3>
-                                    {purchaseResult.success && purchaseResult.data && (
-                                        <div className="text-sm space-y-1">
-                                            <p className="text-gray-300 font-mono text-xs break-all">
-                                                票券: {purchaseResult.data.ticketId}
-                                            </p>
-                                            <p className="text-gray-400">
-                                                時間：{new Date(purchaseResult.data.checkInTime).toLocaleString('zh-TW')}
-                                            </p>
-                                            {purchaseResult.data.txHash && (
-                                                <p className="text-gray-400 text-xs break-all">
-                                                    交易: <a className="underline text-blue-400" href={`https://sepolia.etherscan.io/tx/${purchaseResult.data.txHash}`} target="_blank" rel="noopener noreferrer">{purchaseResult.data.txHash}</a>
-                                                </p>
-                                            )}
-                                        </div>
+                        {/* 錯誤或成功訊息顯示 */}
+                        {purchaseResult && (
+                            <div className={`mt-4 p-6 rounded-xl border-2 ${purchaseResult.success
+                                ? 'bg-green-900/20 border-green-500'
+                                : 'bg-red-900/20 border-red-500'
+                                }`}>
+                                <div className="flex items-start gap-4">
+                                    {purchaseResult.success ? (
+                                        <CheckCircle size={48} className="text-green-500 flex-shrink-0" />
+                                    ) : (
+                                        <XCircle size={48} className="text-red-500 flex-shrink-0" />
                                     )}
-                                    {purchaseResult.error && (
-                                        <p className="text-xs text-red-300 mt-2 opacity-70 break-all">
-                                            {purchaseResult.error}
-                                        </p>
-                                    )}
+                                    <div className="flex-1">
+                                        <h3 className={`text-2xl font-bold mb-2 ${purchaseResult.success ? 'text-green-400' : 'text-red-400'
+                                            }`}>
+                                            {purchaseResult.message}
+                                        </h3>
+                                        {purchaseResult.error && (
+                                            <p className="text-xs text-red-300 mt-2 opacity-70 break-all">
+                                                {purchaseResult.error}
+                                            </p>
+                                        )}
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                    )}
+                        )}
+                    </div>
                 </div>
             </div>
         </div>
