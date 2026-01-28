@@ -191,16 +191,13 @@ contract DeTicketSystem {
         // 檢查付款識別碼的時間戳
         uint256 timestamp = ticketUsageTimestamp[paymentId];
 
-        // 如果時間戳為0，表示未使用
-        if (timestamp == 0) {
-            // 更新為當前時間
-            ticketUsageTimestamp[paymentId] = block.timestamp;
-            emit TicketVerified(paymentId, block.timestamp);
-            return true;
-        }
+        require(timestamp == 0, "Ticket already used");
 
-        // 時間戳大於0，表示已使用
-        return false;
+        // 如果時間戳為0，表示未使用
+        // 更新為當前時間
+        ticketUsageTimestamp[paymentId] = block.timestamp;
+        emit TicketVerified(paymentId, block.timestamp);
+        return true;
     }
 
     /**
@@ -214,7 +211,7 @@ contract DeTicketSystem {
             ,
             ,
 
-         /* uint256 startedAt */) = /* uint256 updatedAt */ /* uint80 answeredInRound */ priceFeed
+        ) = /* uint256 startedAt */ /* uint256 updatedAt */ /* uint80 answeredInRound */ priceFeed
                 .latestRoundData();
 
         return answer; // 價格有8位小數，例如: 200000000000 = $2000.00
