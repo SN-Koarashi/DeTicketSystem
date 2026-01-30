@@ -132,7 +132,7 @@ export default function Home() {
         )}
       </section>
 
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
+      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center mt-4 mb-4">
         <p className="text-center text-sm text-gray-500">© 2026 DeTicket. All rights reserved. Smart Contract Address: <a className='underline' href={`https://sepolia.etherscan.io/address/${process.env.NEXT_PUBLIC_SMART_CONTRACT_ADDRESS}`} target="_blank" rel="noopener noreferrer">{process.env.NEXT_PUBLIC_SMART_CONTRACT_ADDRESS}</a></p>
       </footer>
     </div >
