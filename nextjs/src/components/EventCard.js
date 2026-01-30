@@ -52,7 +52,7 @@ export default function EventCard({ event }) {
                         <div className="flex items-center gap-2">
                             <Tag size={18} className="text-blue-400" />
                             <span className="text-xl font-bold text-blue-400">
-                                {data.priceCent} ¢ Cents
+                                ${(data.priceCent / 100).toFixed(2)} USD
                             </span>
                         </div>
 

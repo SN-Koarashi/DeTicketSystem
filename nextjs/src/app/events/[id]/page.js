@@ -326,7 +326,7 @@ export default function EventDetailPage() {
                                 <div className="flex items-center gap-3">
                                     <Tag size={20} className="text-blue-400" />
                                     <span className="text-2xl font-bold text-blue-400">
-                                        {event.priceCent} ¢ Cents
+                                        {(event.priceCent / 100).toFixed(2)} $USD
                                     </span>
                                     <span className="text-gray-400">/ 張</span>
                                 </div>
@@ -393,7 +393,7 @@ export default function EventDetailPage() {
                                     <div className="bg-white/5 rounded-lg p-4 space-y-2">
                                         <div className="flex justify-between text-gray-300">
                                             <span>單價</span>
-                                            <span>{event.priceCent}  ¢ Cents</span>
+                                            <span>{(event.priceCent / 100).toFixed(2)} $USD</span>
                                         </div>
                                         <div className="flex justify-between text-gray-300">
                                             <span>數量</span>
@@ -402,7 +402,7 @@ export default function EventDetailPage() {
                                         <div className="border-t border-white/10 pt-2 mt-2"></div>
                                         <div className="flex justify-between text-xl font-bold">
                                             <span>總計</span>
-                                            <span className="text-blue-400">{totalPrice}  ¢ Cents</span>
+                                            <span className="text-blue-400">{(totalPrice / 100).toFixed(2)} $USD</span>
                                         </div>
                                     </div>
 
