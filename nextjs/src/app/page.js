@@ -86,7 +86,7 @@ export default function Home() {
             <button
               key={key}
               onClick={() => setSelectedCategory(key)}
-              className={`px-4 py-2 rounded-lg font-medium transition-colors flex-shrink-0 ${selectedCategory === key
+              className={`px-4 py-2 rounded-lg font-medium transition-colors flex-shrink-0 cursor-pointer ${selectedCategory === key
                 ? 'bg-blue-600 text-white'
                 : 'bg-white/5 text-gray-300 hover:bg-white/10'
                 }`}
