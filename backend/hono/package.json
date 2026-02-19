@@ -16,7 +16,6 @@
     "dotenv": "^16.0.0",
     "file-type": "^21.1.1",
     "hono": "^4.10.3",
-    "mysql2": "^3.6.0",
     "siwe": "^3.0.0"
   },
   "devDependencies": {
