@@ -1,23 +1,11 @@
 // @ts-nocheck
 import { Hono } from 'hono';
 import routes from './routes/index.js';
-import { DatabaseConnection } from './lib/DatabaseConnection/index.js';
 
 const app = new Hono();
 
 app.use('/*', async (c, next) => {
-  let db;
-
-  db = new DatabaseConnection(
-    c.env.DB_HOST,
-    c.env.DB_DATABASE,
-    c.env.DB_USERNAME,
-    c.env.DB_PASSWORD,
-    c.env.DB_PORT
-  );
-
-  c.set('db', db);
-  c.set('conn', db.getConnection());
+  c.set('db', c.env.DB);
 
   await next();
 });

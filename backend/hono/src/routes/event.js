@@ -6,10 +6,10 @@ const eventRoutes = new Hono();
  * @param {import('@/types.js').AppContext} c
  */
 eventRoutes.get('/', async (c) => {
-    const conn = c.get('conn');
-    const result = await conn.raw("SELECT * FROM events");
+    const db = c.get('db').prepare('SELECT * FROM events');
+    const result = await db.run();
 
-    return c.json({ message: 'OK', data: result.data });
+    return c.json({ message: 'OK', data: result.results });
 });
 
 /**
@@ -33,8 +33,8 @@ eventRoutes.post('/create', async (c) => {
             }, 400);
         }
 
-        const conn = c.get('conn');
-        await conn.create('events', ['cid', 'summary'], [cid, JSON.stringify(summary)]);
+        const db = c.get('db').prepare('INSERT INTO events (cid, summary) VALUES (?, ?)');
+        await db.bind(cid, JSON.stringify(summary)).run();
 
         return c.json({
             success: true,

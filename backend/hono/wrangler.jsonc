@@ -21,6 +21,13 @@
             "persist": true
         }
     },
+    "d1_databases": [
+        {
+            "binding": "DB",
+            "database_name": "events",
+            "database_id": "2c91565a-e2a0-4ca7-b799-e0980644b132"
+        }
+    ],
     "limits": {
         "cpu_ms": 10000
     }

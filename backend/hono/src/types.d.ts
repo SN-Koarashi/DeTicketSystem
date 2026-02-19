@@ -1,11 +1,11 @@
 import { Context } from 'hono';
 import { DatabaseConnection, DatabaseConnectionWrapper } from '@/lib/DatabaseConnection/types';
+import { D1Database } from '@cloudflare/workers-types/experimental';
 
 // Extend Hono's Context type with our custom variables
 declare module 'hono' {
   interface ContextVariableMap {
-    db: InstanceType<typeof DatabaseConnection>;
-    conn: InstanceType<typeof DatabaseConnectionWrapper>;
+    db: InstanceType<typeof D1Database>;
   }
 }
 

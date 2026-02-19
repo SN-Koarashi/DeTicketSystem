@@ -1,0 +1,5 @@
+CREATE TABLE "events" (
+  "id" INTEGER PRIMARY KEY AUTOINCREMENT,
+  "cid" TEXT NOT NULL,
+  "summary" TEXT NOT NULL
+);
