@@ -358,10 +358,9 @@ DeTicketAndCheckIn/
 │   ├── hono/                 # Hono API 服務
 │   │   ├── src/
 │   │   │   ├── index.js      # 主程式入口
-│   │   │   ├── routes/       # API 路由
-│   │   │   │   ├── event.js  # 活動相關路由
-│   │   │   │   └── index.js  # 路由匯總
-│   │   │   └── lib/          # 資料庫連接等
+│   │   │   └── routes/       # API 路由
+│   │   │       ├── event.js  # 活動相關路由
+│   │   │       └── index.js  # 路由匯總
 │   │   ├── wrangler.jsonc    # Cloudflare Workers 配置
 │   │   └── package.json
 │   │
