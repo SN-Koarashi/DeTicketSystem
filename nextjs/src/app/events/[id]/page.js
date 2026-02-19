@@ -287,7 +287,7 @@ export default function EventDetailPage() {
                     <div className="space-y-6">
                         <div className="relative h-96 rounded-xl overflow-hidden">
                             <Image
-                                src={event.image}
+                                src={event.image && event.image.length > 0 ? event.image : "/placeholder.webp"}
                                 alt={event.name}
                                 fill
                                 className="object-cover"

@@ -77,5 +77,6 @@ export const categories = {
     education: '教育',
     art: '藝術',
     business: '商業',
+    technology: '科技',
     other: '其他'
 };

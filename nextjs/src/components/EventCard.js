@@ -15,7 +15,7 @@ export default function EventCard({ event }) {
                 {/* 活動圖片 */}
                 <div className="relative h-48 overflow-hidden">
                     <Image
-                        src={data.image}
+                        src={data.image && data.image.length > 0 ? data.image : "/placeholder.webp"}
                         alt={data.name}
                         fill
                         className="object-cover group-hover:scale-105 transition-transform duration-300"
