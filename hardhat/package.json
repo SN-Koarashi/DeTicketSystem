@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "author": "SN-Koarashi",
-  "license": "UNLICENSED",
+  "license": "MIT",
   "description": "",
   "dependencies": {
     "@chainlink/contracts": "^1.1.1",

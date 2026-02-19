@@ -1,6 +1,7 @@
 {
   "name": "hono",
   "type": "module",
+  "license": "GPL-3.0-only",
   "scripts": {
     "dev": "wrangler dev --port 8081",
     "dev:remote": "wrangler dev --port 8081 --ip 0.0.0.0",
