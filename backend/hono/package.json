@@ -7,7 +7,7 @@
     "dev:remote": "wrangler dev --port 8081 --ip 0.0.0.0",
     "deploy": "wrangler deploy --minify",
     "cf-typegen": "wrangler types --env-interface CloudflareBindings",
-    "init:db": "wrangler d1 execute events --local --command \"CREATE TABLE events (id INTEGER PRIMARY KEY AUTOINCREMENT, cid TEXT NOT NULL, summary TEXT NOT NULL);\""
+    "init:db": "wrangler d1 execute events --local --command \"CREATE TABLE events (id INTEGER PRIMARY KEY AUTOINCREMENT, cid TEXT NOT NULL, summary BLOB NOT NULL);\""
   },
   "dependencies": {
     "@reown/appkit": "^1.8.14",
