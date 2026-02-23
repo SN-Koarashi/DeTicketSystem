@@ -21,7 +21,7 @@ const nextConfig = {
             return [
                 {
                     source: '/api/:path*',
-                    destination: 'https://ncu-bccs-api.snks.cc/hono/:path*',
+                    destination: 'https://ticket-hono.snks.cc/:path*',
                 },
                 {
                     source: '/ipfs/:path*',
