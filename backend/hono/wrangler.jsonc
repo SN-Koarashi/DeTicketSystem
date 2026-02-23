@@ -1,6 +1,6 @@
 {
     "$schema": "node_modules/wrangler/config-schema.json",
-    "name": "hono",
+    "name": "ticket-hono",
     "main": "src/index.js",
     "compatibility_date": "2025-10-11",
     "compatibility_flags": [
