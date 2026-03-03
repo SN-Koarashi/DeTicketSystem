@@ -119,8 +119,26 @@ export default function CreateEventPage() {
             return false;
         }
 
+        if (validateDateTime(formData.date, formData.time) === false) {
+            return false;
+        }
+
         return true;
     };
+
+    const validateDateTime = (date, time) => {
+        const eventDateTime = new Date(`${date}T${time}`);
+        const now = new Date();
+        if (isNaN(eventDateTime.getTime())) {
+            alert('日期或時間格式不正確');
+            return false;
+        }
+        if (eventDateTime <= now) {
+            alert('活動日期和時間必須在未來');
+            return false;
+        }
+        return true;
+    }
 
     // 取得欄位標籤
     const getFieldLabel = (field) => {
