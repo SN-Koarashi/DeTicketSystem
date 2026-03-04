@@ -338,10 +338,10 @@ export default function CreateEventPage() {
                 organizer: address,
                 signature: sig,
                 createdAt: new Date().toISOString(),
-                eventAt: new Date(`${formData.date}T${formData.time}`).toISOString()
+                heldAt: new Date(`${formData.date}T${formData.time}`).toISOString()
             };
 
-            // 上傳的部分不需要 date 和 time 欄位，從 eventAt 解析即可，避免時區問題
+            // 上傳的部分不需要 date 和 time 欄位，從 heldAt 解析即可，避免時區問題
             delete fullEventData.date;
             delete fullEventData.time;
 
@@ -377,7 +377,7 @@ export default function CreateEventPage() {
             const summary = {
                 name: formData.name,
                 description: formData.description.substring(0, 60) + '...',
-                date: formData.date,
+                heldAt: new Date(`${formData.date}T${formData.time}`).toISOString(),
                 location: formData.location,
                 priceCent: formData.priceCent,
                 image: formData.image,
