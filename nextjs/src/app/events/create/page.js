@@ -317,12 +317,17 @@ export default function CreateEventPage() {
 
             // 步驟 2: 準備活動完整資訊
             setSubmitStep('preparing');
-            const fullEventData = {
+            let fullEventData = {
                 ...formData,
                 organizer: address,
                 signature: sig,
-                createdAt: new Date().toISOString()
+                createdAt: new Date().toISOString(),
+                eventAt: new Date(`${formData.date}T${formData.time}`).toISOString()
             };
+
+            // 上傳的部分不需要 date 和 time 欄位，從 eventAt 解析即可，避免時區問題
+            delete fullEventData.date;
+            delete fullEventData.time;
 
             // 步驟 3: 上傳到 IPFS（暫存，不 pin）
             setSubmitStep('ipfs');
