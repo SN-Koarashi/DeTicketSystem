@@ -72,12 +72,28 @@ export default function CreateEventPage() {
                     const canvas = document.createElement('canvas');
                     const ctx = canvas.getContext('2d');
 
-                    // 設定 canvas 尺寸為原始圖片尺寸
-                    canvas.width = img.width;
-                    canvas.height = img.height;
+                    // 計算縮放比例（如果圖片超過 736x384）
+                    const maxWidth = 736;
+                    const maxHeight = 384;
+                    let width = img.width;
+                    let height = img.height;
 
-                    // 繪製圖片到 canvas
-                    ctx.drawImage(img, 0, 0);
+                    // 如果圖片尺寸超過限制，等比例縮小
+                    if (width > maxWidth || height > maxHeight) {
+                        const widthRatio = maxWidth / width;
+                        const heightRatio = maxHeight / height;
+                        const ratio = Math.min(widthRatio, heightRatio);
+
+                        width = Math.floor(width * ratio);
+                        height = Math.floor(height * ratio);
+                    }
+
+                    // 設定 canvas 尺寸
+                    canvas.width = width;
+                    canvas.height = height;
+
+                    // 繪製圖片到 canvas（自動縮放）
+                    ctx.drawImage(img, 0, 0, width, height);
 
                     // 轉換為 webp 格式，品質 0.75
                     const compressedDataUrl = canvas.toDataURL('image/webp', 0.75);
