@@ -38,7 +38,7 @@ export default function EventCard({ event }) {
                     <div className="space-y-2 text-sm">
                         <div className="flex items-center gap-2 text-gray-300">
                             <Calendar size={16} />
-                            <span>{formatDate(data.eventAt)} {formatTime(data.eventAt)}</span>
+                            <span>{formatDate(data.heldAt)} {formatTime(data.heldAt)}</span>
                         </div>
 
                         <div className="flex items-center gap-2 text-gray-300">

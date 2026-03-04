@@ -310,7 +310,7 @@ export default function EventDetailPage() {
                             <div className="space-y-3 pt-4">
                                 <div className="flex items-center gap-3 text-gray-300">
                                     <Calendar size={20} className="text-blue-400" />
-                                    <span>{formatDate(event.eventAt)} {formatTime(event.eventAt)}</span>
+                                    <span>{formatDate(event.heldAt)} {formatTime(event.heldAt)}</span>
                                 </div>
 
                                 <div className="flex items-center gap-3 text-gray-300">
