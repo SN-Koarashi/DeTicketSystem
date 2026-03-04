@@ -11,6 +11,8 @@ export default function Home() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [isLoading, setIsLoading] = useState(true);
+  const [ethPrice, setEthPrice] = useState(null);
+  const [ethPriceLoading, setEthPriceLoading] = useState(true);
 
 
   // 過濾活動
@@ -39,6 +41,61 @@ export default function Home() {
       }
     }
     fetchEvents();
+  }, []);
+
+  // 獲取 ETH 價格
+  useEffect(() => {
+    async function fetchETHPrice() {
+      try {
+        setEthPriceLoading(true);
+        const { BrowserProvider, Contract } = await import('ethers');
+
+        // Chainlink Price Feed 合約地址 (Sepolia ETH/USD)
+        const priceFeedAddress = '0x694AA1769357215DE4FAC081bf1f309aDC325306';
+
+        // Chainlink AggregatorV3Interface ABI
+        const aggregatorV3InterfaceABI = [
+          {
+            inputs: [],
+            name: "latestRoundData",
+            outputs: [
+              { name: "roundId", type: "uint80" },
+              { name: "answer", type: "int256" },
+              { name: "startedAt", type: "uint256" },
+              { name: "updatedAt", type: "uint256" },
+              { name: "answeredInRound", type: "uint80" }
+            ],
+            stateMutability: "view",
+            type: "function"
+          }
+        ];
+
+        // 創建只讀 provider (不需要連接錢包)
+        const provider = new BrowserProvider(window.ethereum);
+
+        // 創建 Price Feed 合約實例
+        const priceFeed = new Contract(priceFeedAddress, aggregatorV3InterfaceABI, provider);
+
+        // 獲取最新價格
+        const roundData = await priceFeed.latestRoundData();
+        const price = Number(roundData.answer) / 1e8; // Chainlink 使用 8 位小數
+
+        setEthPrice(price);
+        console.log('當前 ETH/USD 價格:', price);
+      } catch (error) {
+        console.error('Error fetching ETH price:', error);
+        setEthPrice(null);
+      } finally {
+        setEthPriceLoading(false);
+      }
+    }
+
+    // 只在瀏覽器環境且有 window.ethereum 時執行
+    if (typeof window !== 'undefined' && window.ethereum) {
+      fetchETHPrice();
+    } else {
+      setEthPriceLoading(false);
+    }
   }, []);
 
   return (
@@ -73,6 +130,18 @@ export default function Home() {
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full pl-12 pr-4 py-4 bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:border-blue-500 transition-colors"
               />
+            </div>
+          </div>
+          <div className="max-w-2xl mx-auto mt-3 text-sm text-gray-500">
+            <div className="relative flex items-center justify-center gap-2">
+              {ethPriceLoading ? (
+                <span className="text-gray-400">載入中...</span>
+              ) : ethPrice ? (
+                <>
+                  <span className="text-gray-400">ETH 現價:</span>
+                  <span className="text-blue-400 font-semibold">${ethPrice.toFixed(2)} USD</span>
+                </>
+              ) : null}
             </div>
           </div>
         </div>
