@@ -48,7 +48,7 @@ export default function Home() {
     async function fetchETHPrice() {
       try {
         setEthPriceLoading(true);
-        const { BrowserProvider, Contract } = await import('ethers');
+        const { JsonRpcProvider, Contract } = await import('ethers');
 
         // Chainlink Price Feed 合約地址 (Sepolia ETH/USD)
         const priceFeedAddress = '0x694AA1769357215DE4FAC081bf1f309aDC325306';
@@ -70,8 +70,8 @@ export default function Home() {
           }
         ];
 
-        // 創建只讀 provider (不需要連接錢包)
-        const provider = new BrowserProvider(window.ethereum);
+        // 使用公開的 Sepolia RPC，不需要錢包
+        const provider = new JsonRpcProvider('https://ethereum-sepolia-rpc.publicnode.com');
 
         // 創建 Price Feed 合約實例
         const priceFeed = new Contract(priceFeedAddress, aggregatorV3InterfaceABI, provider);
@@ -90,12 +90,7 @@ export default function Home() {
       }
     }
 
-    // 只在瀏覽器環境且有 window.ethereum 時執行
-    if (typeof window !== 'undefined' && window.ethereum) {
-      fetchETHPrice();
-    } else {
-      setEthPriceLoading(false);
-    }
+    fetchETHPrice();
   }, []);
 
   return (
