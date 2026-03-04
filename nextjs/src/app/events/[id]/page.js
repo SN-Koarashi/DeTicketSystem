@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useAccount } from 'wagmi';
 import { useRouter, useParams } from 'next/navigation';
 import Image from 'next/image';
-import { calculateABIHash, calculateHash, categories, formatDate, getRemainingTickets, isEventSoldOut } from '@/lib/utils';
+import { calculateABIHash, calculateHash, categories, formatDate, formatTime } from '@/lib/utils';
 import { Calendar, MapPin, Users, Tag, ArrowLeft, ShoppingCart, CheckCircle, XCircle } from 'lucide-react';
 
 export default function EventDetailPage() {
@@ -310,7 +310,7 @@ export default function EventDetailPage() {
                             <div className="space-y-3 pt-4">
                                 <div className="flex items-center gap-3 text-gray-300">
                                     <Calendar size={20} className="text-blue-400" />
-                                    <span>{formatDate(event.date)} {event.time}</span>
+                                    <span>{formatDate(event.eventAt)} {formatTime(event.eventAt)}</span>
                                 </div>
 
                                 <div className="flex items-center gap-3 text-gray-300">

@@ -10,6 +10,15 @@ export function formatDate(dateString) {
     });
 }
 
+// 格式化時間
+export function formatTime(dateString) {
+    const date = new Date(dateString);
+    return date.toLocaleTimeString('zh-TW', {
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+}
+
 // 格式化錢包地址
 export function formatAddress(address) {
     if (!address) return '';

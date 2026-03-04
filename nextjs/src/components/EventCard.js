@@ -1,7 +1,7 @@
 import { Calendar, MapPin, Users, Tag } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { formatDate, getRemainingTickets, isEventSoldOut } from '@/lib/utils';
+import { formatDate, formatTime, getRemainingTickets, isEventSoldOut } from '@/lib/utils';
 import { categories } from '@/lib/utils';
 
 export default function EventCard({ event }) {
@@ -38,7 +38,7 @@ export default function EventCard({ event }) {
                     <div className="space-y-2 text-sm">
                         <div className="flex items-center gap-2 text-gray-300">
                             <Calendar size={16} />
-                            <span>{formatDate(data.date)} {data.time}</span>
+                            <span>{formatDate(data.eventAt)} {formatTime(data.eventAt)}</span>
                         </div>
 
                         <div className="flex items-center gap-2 text-gray-300">
