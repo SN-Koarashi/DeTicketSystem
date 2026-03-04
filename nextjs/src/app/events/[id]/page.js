@@ -333,10 +333,10 @@ export default function EventDetailPage() {
                             </div>
 
                             <div className="pt-4 border-t border-white/10">
-                                <p className="text-sm text-gray-400">
+                                <p className="text-sm text-gray-400 w-full break-all">
                                     主辦單位：{event.organizer}
                                 </p>
-                                <p className="text-sm text-gray-400 w-100 break-all">
+                                <p className="text-sm text-gray-400 w-full break-all">
                                     單位簽章：{event.signature}
                                 </p>
                             </div>
