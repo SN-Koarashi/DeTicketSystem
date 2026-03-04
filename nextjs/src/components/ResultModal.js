@@ -11,7 +11,10 @@ export default function Modal({
 
     return (
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50">
-            <div className="bg-gray-900 p-6 rounded-2xl max-w-2xl w-full mx-4 border border-gray-700">
+            <div className="bg-gray-900 p-6 rounded-2xl max-w-2xl w-full mx-4 border border-gray-700" style={{
+                overflowY: "auto",
+                maxHeight: "100vh"
+            }}>
                 <div className="text-center mb-4 flex flex-row items-center gap-4 justify-center">
                     <CheckCircle className="w-16 h-16 text-green-400" />
                     <h3 className="text-3xl font-bold text-green-400">活動建立成功</h3>
