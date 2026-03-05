@@ -199,9 +199,14 @@ export default function EventDetailPage() {
             const requiredETH = await contract.calculateRequiredETH(ticketPriceUSD);
             console.log('Required ETH:', requiredETH.toString());
 
-            // 步驟 5: 調用 purchaseTicket 函數（支付計算出的 ETH）
+            // 添加 2% 安全餘量以應對價格波動（多餘的會自動退還）
+            const safetyMargin = (requiredETH * 2n) / 100n; // 2%
+            const totalToSend = requiredETH + safetyMargin;
+            console.log('Sending ETH with 2% safety margin:', totalToSend.toString());
+
+            // 步驟 5: 調用 purchaseTicket 函數（支付計算出的 ETH + 安全余量）
             const tx = await contract.purchaseTicket(eventId, ticketNonce, {
-                value: requiredETH
+                value: totalToSend
             });
 
             console.log('Transaction sent:', tx.hash);

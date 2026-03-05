@@ -151,8 +151,8 @@ contract DeTicketSystem {
         ticketOwner[paymentId] = msg.sender;
 
         // 計算分帳金額
-        uint256 ownerShare = (msg.value * 25) / 100; // 25% 給合約建立者
-        uint256 organizerShare = msg.value - ownerShare; // 75% 給主辦者
+        uint256 ownerShare = (requiredETH * 25) / 100; // 25% 給合約建立者
+        uint256 organizerShare = requiredETH - ownerShare; // 75% 給主辦者
 
         // 執行分帳
         (bool ownerSuccess, ) = contractOwner.call{value: ownerShare}("");
@@ -163,7 +163,7 @@ contract DeTicketSystem {
         }("");
         require(organizerSuccess, "Transfer to organizer failed");
 
-        emit TicketPurchased(paymentId, eventId, msg.sender, msg.value);
+        emit TicketPurchased(paymentId, eventId, msg.sender, requiredETH);
 
         // 退還多餘的款項
         if (msg.value > requiredETH) {
