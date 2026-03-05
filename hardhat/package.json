@@ -5,6 +5,9 @@
   "author": "SN-Koarashi",
   "license": "MIT",
   "description": "",
+  "scripts": {
+    "deploy": "hardhat run scripts/deploy.js --network sepolia"
+  },
   "dependencies": {
     "@chainlink/contracts": "^1.1.1",
     "@nomicfoundation/hardhat-toolbox": "^6.1.0",
