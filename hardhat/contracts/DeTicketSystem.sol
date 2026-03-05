@@ -141,6 +141,15 @@ contract DeTicketSystem {
         uint256 requiredETH = calculateRequiredETH(eventInfo.ticketPriceUSD);
         require(msg.value >= requiredETH, "Insufficient payment");
 
+        // 增加已售票券數量
+        eventInfo.ticketsSold += 1;
+
+        // 初始化付款識別碼的時間戳為0 (未使用)
+        ticketUsageTimestamp[paymentId] = 0;
+
+        // 記錄票券擁有者
+        ticketOwner[paymentId] = msg.sender;
+
         // 計算分帳金額
         uint256 ownerShare = (msg.value * 25) / 100; // 25% 給合約建立者
         uint256 organizerShare = msg.value - ownerShare; // 75% 給主辦者
@@ -153,15 +162,6 @@ contract DeTicketSystem {
             value: organizerShare
         }("");
         require(organizerSuccess, "Transfer to organizer failed");
-
-        // 增加已售票券數量
-        eventInfo.ticketsSold += 1;
-
-        // 初始化付款識別碼的時間戳為0 (未使用)
-        ticketUsageTimestamp[paymentId] = 0;
-
-        // 記錄票券擁有者
-        ticketOwner[paymentId] = msg.sender;
 
         emit TicketPurchased(paymentId, eventId, msg.sender, msg.value);
 
