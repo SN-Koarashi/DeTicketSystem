@@ -80,6 +80,60 @@ export const calculateABIHash = async (cid, contentHash, organizer) => {
     return eventId;
 };
 
+/**
+ * 驗證 IPFS 活動數據的簽名
+ * @param {Object} ipfsData - 從 IPFS 獲取的完整活動數據
+ * @returns {Promise<Object>} - { isValid: boolean, error?: string }
+ */
+export const verifyEventSignature = async (ipfsData) => {
+    try {
+        // 檢查必要欄位
+        if (!ipfsData.signature || !ipfsData.signedDataHash || !ipfsData.organizer) {
+            return {
+                isValid: false,
+                error: '缺少必要的驗證欄位（signature, signedDataHash, organizer）'
+            };
+        }
+
+        // 提取簽名相關數據
+        const { signature, signedDataHash, organizer, name, createdAt, ...dataToVerify } = ipfsData;
+
+        // 重新計算數據 hash（排除簽名本身）
+        const calculatedHash = await calculateHash(dataToVerify);
+
+        // 檢查 hash 是否匹配
+        if (calculatedHash !== signedDataHash) {
+            return {
+                isValid: false,
+                error: '數據 hash 不匹配，數據可能已被篡改'
+            };
+        }
+
+        // 重建簽名時的訊息
+        const message = `我確認創建以下活動:\n\n活動名稱: ${name}\n數據 Hash: ${signedDataHash}\n時間戳: ${createdAt}`;
+
+        // 驗證簽名
+        const recoveredAddress = ethers.verifyMessage(message, signature);
+
+        // 檢查簽名者是否為主辦方
+        if (recoveredAddress.toLowerCase() !== organizer.toLowerCase()) {
+            return {
+                isValid: false,
+                error: '簽名無效，簽名者與主辦方地址不符'
+            };
+        }
+
+        return { isValid: true };
+
+    } catch (error) {
+        console.error('簽名驗證失敗:', error);
+        return {
+            isValid: false,
+            error: `驗證過程發生錯誤: ${error.message}`
+        };
+    }
+};
+
 export const categories = {
     all: '全部',
     music: '音樂',

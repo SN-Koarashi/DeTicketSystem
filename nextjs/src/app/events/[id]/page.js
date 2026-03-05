@@ -4,8 +4,8 @@ import { useState, useEffect } from 'react';
 import { useAccount } from 'wagmi';
 import { useRouter, useParams } from 'next/navigation';
 import Image from 'next/image';
-import { calculateABIHash, calculateHash, categories, formatDate, formatTime } from '@/lib/utils';
-import { Calendar, MapPin, Users, Tag, ArrowLeft, ShoppingCart, CheckCircle, XCircle } from 'lucide-react';
+import { calculateABIHash, calculateHash, categories, formatDate, formatTime, verifyEventSignature } from '@/lib/utils';
+import { Calendar, MapPin, Users, Tag, ArrowLeft, ShoppingCart, CheckCircle, XCircle, Shield, AlertTriangle } from 'lucide-react';
 
 export default function EventDetailPage() {
     const params = useParams();
@@ -18,6 +18,7 @@ export default function EventDetailPage() {
     const [isPurchasing, setIsPurchasing] = useState(false);
     const [purchaseComplete, setPurchaseComplete] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
+    const [verificationStatus, setVerificationStatus] = useState({ isVerified: false, isVerifying: true, error: null });
 
     useEffect(() => {
         if (params.id) {
@@ -33,7 +34,7 @@ export default function EventDetailPage() {
                 }
             }
 
-            fetchEvents().then(data => {
+            fetchEvents().then(async data => {
                 if (data && data.success) {
                     setEvent({
                         ...data.data,
@@ -41,6 +42,18 @@ export default function EventDetailPage() {
                     });
 
                     setIpfsData(data.data);
+
+                    // 驗證 IPFS 數據簽名
+                    setVerificationStatus({ isVerified: false, isVerifying: true, error: null });
+                    const verifyResult = await verifyEventSignature(data.data);
+
+                    if (verifyResult.isValid) {
+                        setVerificationStatus({ isVerified: true, isVerifying: false, error: null });
+                        console.log('✓ IPFS 數據簽名驗證成功');
+                    } else {
+                        setVerificationStatus({ isVerified: false, isVerifying: false, error: verifyResult.error });
+                        console.warn('✗ IPFS 數據簽名驗證失敗:', verifyResult.error);
+                    }
                 }
             }).finally(() => {
                 setIsLoading(false);
@@ -297,11 +310,49 @@ export default function EventDetailPage() {
                         <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl p-6 space-y-4">
                             <h1 className="text-3xl font-bold">{event.name}</h1>
 
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-2 flex-wrap">
                                 <span className="px-3 py-1 bg-blue-600 rounded-full text-sm">
                                     {categories[event.category]}
                                 </span>
+
+                                {/* 驗證狀態徽章 */}
+                                {verificationStatus.isVerifying ? (
+                                    <span className="px-3 py-1 bg-gray-600/50 rounded-full text-sm flex items-center gap-1.5">
+                                        <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white"></div>
+                                        驗證中...
+                                    </span>
+                                ) : verificationStatus.isVerified ? (
+                                    <span className="px-3 py-1 bg-green-600/80 rounded-full text-sm flex items-center gap-1.5">
+                                        <Shield size={14} />
+                                        資訊完整性已驗證
+                                    </span>
+                                ) : (
+                                    <span className="px-3 py-1 bg-red-600/80 rounded-full text-sm flex items-center gap-1.5">
+                                        <AlertTriangle size={14} />
+                                        驗證失敗
+                                    </span>
+                                )}
                             </div>
+
+                            {/* 驗證失敗警告 */}
+                            {!verificationStatus.isVerifying && !verificationStatus.isVerified && (
+                                <div className="bg-red-900/20 border border-red-500/50 rounded-lg p-4">
+                                    <div className="flex items-start gap-3">
+                                        <AlertTriangle size={20} className="text-red-400 flex-shrink-0 mt-0.5" />
+                                        <div className="space-y-1">
+                                            <p className="text-red-400 font-medium">⚠️ 數據簽名驗證失敗</p>
+                                            <p className="text-red-300 text-sm">
+                                                此活動的 IPFS 數據可能已被篡改或損壞，建議謹慎購買。
+                                            </p>
+                                            {verificationStatus.error && (
+                                                <p className="text-red-300/70 text-xs mt-2 break-all">
+                                                    錯誤詳情：{verificationStatus.error}
+                                                </p>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
 
                             <p className="text-gray-300 text-lg leading-relaxed">
                                 {event.description}
@@ -406,16 +457,33 @@ export default function EventDetailPage() {
                                         </div>
                                     </div>
 
+                                    {/* 驗證警告（如果驗證失敗） */}
+                                    {!verificationStatus.isVerifying && !verificationStatus.isVerified && (
+                                        <div className="bg-yellow-900/20 border border-yellow-500/50 rounded-lg p-3">
+                                            <p className="text-yellow-400 text-sm text-center flex items-center justify-center gap-2">
+                                                <AlertTriangle size={16} />
+                                                數據驗證失敗，購買風險較高
+                                            </p>
+                                        </div>
+                                    )}
+
                                     {/* 購買按鈕 */}
                                     <button
                                         onClick={handlePurchase}
-                                        disabled={!isConnected || isPurchasing}
-                                        className={`w-full py-4 rounded-lg font-bold text-lg transition-all flex items-center justify-center gap-2 ${!isConnected || isPurchasing
-                                            ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
-                                            : 'bg-blue-600 hover:bg-blue-700 text-white hover:shadow-lg hover:shadow-blue-500/50 cursor-pointer'
+                                        disabled={!isConnected || isPurchasing || verificationStatus.isVerifying}
+                                        className={`w-full py-4 rounded-lg font-bold text-lg transition-all flex items-center justify-center gap-2 ${!isConnected || isPurchasing || verificationStatus.isVerifying
+                                                ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
+                                                : !verificationStatus.isVerified
+                                                    ? 'bg-yellow-600 hover:bg-yellow-700 text-white hover:shadow-lg hover:shadow-yellow-500/50 cursor-pointer'
+                                                    : 'bg-blue-600 hover:bg-blue-700 text-white hover:shadow-lg hover:shadow-blue-500/50 cursor-pointer'
                                             }`}
                                     >
-                                        {isPurchasing ? (
+                                        {verificationStatus.isVerifying ? (
+                                            <>
+                                                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                                                <span>驗證中...</span>
+                                            </>
+                                        ) : isPurchasing ? (
                                             <>
                                                 <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
                                                 <span>處理中...</span>
@@ -423,7 +491,7 @@ export default function EventDetailPage() {
                                         ) : (
                                             <>
                                                 <ShoppingCart size={20} />
-                                                <span>確認購買</span>
+                                                <span>{!verificationStatus.isVerified ? '⚠️ 仍要購買' : '確認購買'}</span>
                                             </>
                                         )}
                                     </button>

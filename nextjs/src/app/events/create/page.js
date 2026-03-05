@@ -304,6 +304,24 @@ export default function CreateEventPage() {
     };
 
     // 提交表單
+    /**
+     * 活動創建流程與簽名驗證說明：
+     * 
+     * 1. 離線簽名目的：
+     *    - 證明 IPFS 上的完整數據由主辦方創建且未被篡改
+     *    - 簽署內容包含完整數據的 keccak256 hash，確保數據完整性
+     *    - 任何人都可以從 IPFS 下載數據並驗證簽名的有效性
+     * 
+     * 2. 驗證方式：
+     *    - 前端：用戶可以從 IPFS 獲取 signature 和 signedDataHash
+     *    - 重新計算數據 hash 並與 signedDataHash 比對
+     *    - 使用 ethers.verifyMessage() 驗證簽名是否由 organizer 地址簽署
+     * 
+     * 3. 安全性保證：
+     *    - 智慧合約交易：確保只有 msg.sender 能以其身份創建活動
+     *    - 離線簽名：確保 IPFS 數據完整性和來源可驗證性
+     *    - 兩者結合：提供鏈上和鏈下的雙重安全保障
+     */
     const handleSubmit = async (e) => {
         e.preventDefault();
 
@@ -324,19 +342,11 @@ export default function CreateEventPage() {
         setIsSubmitting(true);
 
         try {
-            // 步驟 1: 簽署訊息確認主辦方身份
-            setSubmitStep('signing');
-            const message = `我確認創建活動: ${formData.name}\n時間: ${new Date().toISOString()}`;
-            const sig = await signMessageAsync({ message });
-            setSignature(sig);
-            console.log('Signature:', sig);
-
-            // 步驟 2: 準備活動完整資訊
+            // 步驟 1: 準備活動完整資訊（不含簽名）
             setSubmitStep('preparing');
             let fullEventData = {
                 ...formData,
                 organizer: address,
-                signature: sig,
                 createdAt: new Date().toISOString(),
                 heldAt: new Date(`${formData.date}T${formData.time}`).toISOString()
             };
@@ -345,16 +355,28 @@ export default function CreateEventPage() {
             delete fullEventData.date;
             delete fullEventData.time;
 
-            // 步驟 3: 上傳到 IPFS（暫存，不 pin）
+            // 步驟 2: 計算資料 hash
+            const dataHash = await calculateHash(fullEventData);
+            console.log('Data Hash:', dataHash);
+
+            // 步驟 3: 簽署資料 hash 確認主辦方身份和數據完整性
+            setSubmitStep('signing');
+            const message = `我確認創建以下活動:\n\n活動名稱: ${formData.name}\n數據 Hash: ${dataHash}\n時間戳: ${new Date().toISOString()}`;
+            const sig = await signMessageAsync({ message });
+            setSignature(sig);
+            console.log('Signature:', sig);
+
+            // 將簽名加入完整資料
+            fullEventData.signature = sig;
+            fullEventData.signedDataHash = dataHash;
+
+            // 步驟 4: 上傳到 IPFS（暫存，不 pin）
             setSubmitStep('ipfs');
             const { cid, pinned } = await uploadToIPFS(fullEventData);
             console.log('IPFS CID:', cid, '(pinned:', pinned, ')');
 
-            // 步驟 4: 計算資料 hash
-            const dataHash = await calculateHash(fullEventData);
-            console.log('Data Hash:', dataHash);
-
             // 步驟 5: 與智慧合約互動（先執行，避免後續需要回滾資料庫）
+            // 注意：合約會驗證 msg.sender，確保只有簽名者本人能創建活動
             setSubmitStep('contract');
             let eventId;
             try {
