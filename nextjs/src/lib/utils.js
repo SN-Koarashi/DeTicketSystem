@@ -182,7 +182,7 @@ export const verifyEventOnChain = async (cid, ipfsData) => {
         if (!exists) {
             return {
                 isValid: false,
-                error: '活動不存在於智慧合約中，此 IPFS 數據可能是偽造的',
+                error: '活動不存在於智慧合約中，此 IPFS 資訊可能是偽造的',
                 eventId
             };
         }
@@ -191,7 +191,7 @@ export const verifyEventOnChain = async (cid, ipfsData) => {
         if (onChainOrganizer.toLowerCase() !== organizer.toLowerCase()) {
             return {
                 isValid: false,
-                error: '主辦方地址與鏈上記錄不符，數據已被篡改',
+                error: '主辦方地址與鏈上記錄不符，資料已被篡改',
                 eventId
             };
         }

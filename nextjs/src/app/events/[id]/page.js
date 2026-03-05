@@ -139,7 +139,7 @@ export default function EventDetailPage() {
             const onChainVerification = await verifyEventOnChain(cid, ipfsData);
 
             if (!onChainVerification.isValid) {
-                alert(`⚠️ 鏈上驗證失敗！\n\n${onChainVerification.error}\n\n此活動數據可能已被篡改，建議不要購買。`);
+                handlePurchaseError(`鏈上驗證失敗！${onChainVerification.error}\n\n此活動資訊可能已被篡改，建議不要購買。`);
                 setIsPurchasing(false);
                 setPurchaseStep('');
                 return;
