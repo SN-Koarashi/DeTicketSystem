@@ -13,7 +13,7 @@ const nextConfig = {
     devIndicators: { position: "bottom-left" },
     env: {
         NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID: "732dbd3ba5be9978067e2c1318e5cad7",
-        NEXT_PUBLIC_SMART_CONTRACT_ADDRESS: "0xEB7068E9B6f3c3858F4539Df9964721F71a703f8"
+        NEXT_PUBLIC_SMART_CONTRACT_ADDRESS: "0x6a8aF280e77eb5870217c224f9277ed9Df41260E"
     },
     rewrites: async function () {
         if (process.env.NODE_ENV === 'production') {
