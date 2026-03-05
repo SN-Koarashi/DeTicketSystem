@@ -9,6 +9,7 @@
         "libp",
         "opennextjs",
         "rainbowkit",
+        "Reentrancy",
         "unixfs",
         "wagmi"
     ]

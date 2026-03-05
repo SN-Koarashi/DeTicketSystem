@@ -2,12 +2,13 @@
 pragma solidity ^0.8.19;
 
 import "@chainlink/contracts/src/v0.8/shared/interfaces/AggregatorV3Interface.sol";
+import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
 /**
  * @title DeTicketSystem
  * @dev 去中心化售票與簽到系統智慧合約
  */
-contract DeTicketSystem {
+contract DeTicketSystem is ReentrancyGuard {
     // 合約建立者地址
     address public immutable contractOwner;
 
@@ -116,7 +117,7 @@ contract DeTicketSystem {
     function purchaseTicket(
         bytes32 eventId,
         uint256 nonce
-    ) external payable returns (bytes32 paymentId) {
+    ) external payable nonReentrant returns (bytes32 paymentId) {
         // 檢查活動是否存在
         require(events[eventId].exists, "Event does not exist");
 
