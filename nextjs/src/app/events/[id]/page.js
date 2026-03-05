@@ -417,7 +417,7 @@ export default function EventDetailPage() {
                     <div className="lg:sticky lg:top-24 h-fit">
                         {/* 錯誤或成功訊息顯示 */}
                         {purchaseResult && (
-                            <div className={`mt-4 p-6 rounded-xl border-2 ${purchaseResult.success
+                            <div className={`mb-4 p-6 rounded-xl border-2 ${purchaseResult.success
                                 ? 'bg-green-900/20 border-green-500'
                                 : 'bg-red-900/20 border-red-500'
                                 }`}>
