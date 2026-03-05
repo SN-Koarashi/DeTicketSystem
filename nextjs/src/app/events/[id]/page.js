@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useAccount } from 'wagmi';
 import { useRouter, useParams } from 'next/navigation';
 import Image from 'next/image';
-import { calculateABIHash, calculateHash, categories, formatDate, formatTime, verifyEventSignature } from '@/lib/utils';
+import { calculateABIHash, calculateHash, categories, formatDate, formatTime, verifyEventSignature, verifyEventOnChain } from '@/lib/utils';
 import { Calendar, MapPin, Users, Tag, ArrowLeft, ShoppingCart, CheckCircle, XCircle, Shield, AlertTriangle } from 'lucide-react';
 
 export default function EventDetailPage() {
@@ -16,6 +16,7 @@ export default function EventDetailPage() {
     const [ipfsData, setIpfsData] = useState(null);
     const [quantity, setQuantity] = useState(1);
     const [isPurchasing, setIsPurchasing] = useState(false);
+    const [purchaseStep, setPurchaseStep] = useState(''); // 'verifying', 'purchasing', 'confirming'
     const [purchaseComplete, setPurchaseComplete] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
     const [verificationStatus, setVerificationStatus] = useState({ isVerified: false, isVerifying: true, error: null });
@@ -129,20 +130,31 @@ export default function EventDetailPage() {
         }
 
         setIsPurchasing(true);
+        setPurchaseStep('verifying');
 
         try {
-            // 步驟 1: 計算活動識別碼
+            // 步驟 1: 鏈上驗證 - 確保 IPFS 數據與智慧合約記錄一致（防止 IPFS 節點造假）
+            console.log('🔍 開始鏈上驗證...');
             const cid = event.id;
-            const dataHash = await calculateHash(ipfsData);
-            const organizer = ipfsData.organizer;
-            const eventId = await calculateABIHash(cid, dataHash, organizer);
+            const onChainVerification = await verifyEventOnChain(cid, ipfsData);
+
+            if (!onChainVerification.isValid) {
+                alert(`⚠️ 鏈上驗證失敗！\n\n${onChainVerification.error}\n\n此活動數據可能已被篡改，建議不要購買。`);
+                setIsPurchasing(false);
+                setPurchaseStep('');
+                return;
+            }
+
+            console.log('✓ 鏈上驗證成功，數據未被篡改');
+            const eventId = onChainVerification.eventId;
             console.log('Event ID:', eventId);
 
-            // 步驟 2: 生成隨機票券 ID (nonce)
             const ticketNonce = Math.floor(Math.random() * 1000000000);
+            // 步驟 2: 生成隨機票券 ID (nonce)
+            setPurchaseStep('purchasing');
             console.log('Ticket Nonce:', ticketNonce);
 
-            // 步驟 3: 與智慧合約互動
+            // 步驟 3: 與智慧合約互動（購買票券）
             const { BrowserProvider, Contract } = await import('ethers');
 
             // 從環境變數取得智慧合約地址
@@ -195,6 +207,7 @@ export default function EventDetailPage() {
             console.log('Transaction sent:', tx.hash);
 
             // 步驟 6: 等待交易確認
+            setPurchaseStep('confirming');
             const receipt = await tx.wait();
             console.log('Transaction confirmed:', receipt.hash);
 
@@ -242,6 +255,7 @@ export default function EventDetailPage() {
             handlePurchaseError(error.message);
         } finally {
             setIsPurchasing(false);
+            setPurchaseStep('');
         }
     };
 
@@ -462,7 +476,7 @@ export default function EventDetailPage() {
                                         <div className="bg-yellow-900/20 border border-yellow-500/50 rounded-lg p-3">
                                             <p className="text-yellow-400 text-sm text-center flex items-center justify-center gap-2">
                                                 <AlertTriangle size={16} />
-                                                數據驗證失敗，購買風險較高
+                                                資料驗證失敗，購買風險較高
                                             </p>
                                         </div>
                                     )}
@@ -472,10 +486,10 @@ export default function EventDetailPage() {
                                         onClick={handlePurchase}
                                         disabled={!isConnected || isPurchasing || verificationStatus.isVerifying}
                                         className={`w-full py-4 rounded-lg font-bold text-lg transition-all flex items-center justify-center gap-2 ${!isConnected || isPurchasing || verificationStatus.isVerifying
-                                                ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
-                                                : !verificationStatus.isVerified
-                                                    ? 'bg-yellow-600 hover:bg-yellow-700 text-white hover:shadow-lg hover:shadow-yellow-500/50 cursor-pointer'
-                                                    : 'bg-blue-600 hover:bg-blue-700 text-white hover:shadow-lg hover:shadow-blue-500/50 cursor-pointer'
+                                            ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
+                                            : !verificationStatus.isVerified
+                                                ? 'bg-yellow-600 hover:bg-yellow-700 text-white hover:shadow-lg hover:shadow-yellow-500/50 cursor-pointer'
+                                                : 'bg-blue-600 hover:bg-blue-700 text-white hover:shadow-lg hover:shadow-blue-500/50 cursor-pointer'
                                             }`}
                                     >
                                         {verificationStatus.isVerifying ? (
@@ -486,7 +500,12 @@ export default function EventDetailPage() {
                                         ) : isPurchasing ? (
                                             <>
                                                 <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                                                <span>處理中...</span>
+                                                <span>
+                                                    {purchaseStep === 'verifying' && '鏈上驗證中...'}
+                                                    {purchaseStep === 'purchasing' && '發送交易中...'}
+                                                    {purchaseStep === 'confirming' && '等待確認中...'}
+                                                    {!purchaseStep && '處理中...'}
+                                                </span>
                                             </>
                                         ) : (
                                             <>
@@ -498,6 +517,7 @@ export default function EventDetailPage() {
 
                                     {/* 說明文字 */}
                                     <div className="text-sm text-gray-400 space-y-1">
+                                        <p>✓ 購買前會驗證鏈上數據</p>
                                         <p>✓ 票券以 NFT 形式發行</p>
                                         <p>✓ 不可轉售或轉移</p>
                                         <p>✓ 區塊鏈存證，防偽造</p>
