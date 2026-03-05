@@ -139,7 +139,7 @@ export default function EventDetailPage() {
             const onChainVerification = await verifyEventOnChain(cid, ipfsData);
 
             if (!onChainVerification.isValid) {
-                handlePurchaseError(`鏈上驗證失敗！${onChainVerification.error}\n\n此活動資訊可能已被篡改，建議不要購買。`);
+                handlePurchaseError(`鏈上驗證失敗。${onChainVerification.error}。此活動資訊可能已被篡改，建議不要購買。`);
                 setIsPurchasing(false);
                 setPurchaseStep('');
                 return;
@@ -415,6 +415,33 @@ export default function EventDetailPage() {
 
                     {/* 右側：購票表單 */}
                     <div className="lg:sticky lg:top-24 h-fit">
+                        {/* 錯誤或成功訊息顯示 */}
+                        {purchaseResult && (
+                            <div className={`mt-4 p-6 rounded-xl border-2 ${purchaseResult.success
+                                ? 'bg-green-900/20 border-green-500'
+                                : 'bg-red-900/20 border-red-500'
+                                }`}>
+                                <div className="flex items-start gap-4">
+                                    {purchaseResult.success ? (
+                                        <CheckCircle size={48} className="text-green-500 flex-shrink-0" />
+                                    ) : (
+                                        <XCircle size={48} className="text-red-500 flex-shrink-0" />
+                                    )}
+                                    <div className="flex-1">
+                                        <h3 className={`text-2xl font-bold mb-2 ${purchaseResult.success ? 'text-green-400' : 'text-red-400'
+                                            }`}>
+                                            {purchaseResult.message}
+                                        </h3>
+                                        {purchaseResult.error && (
+                                            <p className="text-xs text-red-300 mt-2 opacity-70 break-all">
+                                                {purchaseResult.error}
+                                            </p>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
                         <div className="bg-gradient-to-br from-blue-900/30 to-purple-900/30 backdrop-blur-sm border border-white/10 rounded-xl p-6 space-y-6">
                             <h2 className="text-2xl font-bold">購買票券</h2>
 
@@ -530,33 +557,6 @@ export default function EventDetailPage() {
                                 </>
                             )}
                         </div>
-
-                        {/* 錯誤或成功訊息顯示 */}
-                        {purchaseResult && (
-                            <div className={`mt-4 p-6 rounded-xl border-2 ${purchaseResult.success
-                                ? 'bg-green-900/20 border-green-500'
-                                : 'bg-red-900/20 border-red-500'
-                                }`}>
-                                <div className="flex items-start gap-4">
-                                    {purchaseResult.success ? (
-                                        <CheckCircle size={48} className="text-green-500 flex-shrink-0" />
-                                    ) : (
-                                        <XCircle size={48} className="text-red-500 flex-shrink-0" />
-                                    )}
-                                    <div className="flex-1">
-                                        <h3 className={`text-2xl font-bold mb-2 ${purchaseResult.success ? 'text-green-400' : 'text-red-400'
-                                            }`}>
-                                            {purchaseResult.message}
-                                        </h3>
-                                        {purchaseResult.error && (
-                                            <p className="text-xs text-red-300 mt-2 opacity-70 break-all">
-                                                {purchaseResult.error}
-                                            </p>
-                                        )}
-                                    </div>
-                                </div>
-                            </div>
-                        )}
                     </div>
                 </div>
             </div>
