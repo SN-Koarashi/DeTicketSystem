@@ -1,5 +1,8 @@
+"use client";
+
 import { Calendar, MapPin, DollarSign, Users, FileText, Image as ImageIcon, Wallet, Upload, CheckCircle, Loader2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
 import { useAccount } from 'wagmi';
 export default function FormView({
     formData = {},
@@ -10,6 +13,12 @@ export default function FormView({
 }) {
     const router = useRouter();
     const { isConnected, chain } = useAccount();
+    const [mounted, setMounted] = useState(false);
+
+    useEffect(() => {
+        setMounted(isConnected && chain?.id === 11155111);
+    }, [isConnected, chain?.id]);
+
     return (
         <>
             <form onSubmit={handleSubmit} className="space-y-6">
@@ -33,7 +42,7 @@ export default function FormView({
                                 onChange={handleInputChange}
                                 placeholder="例：2024 台北音樂節"
                                 className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:border-blue-500 transition-colors"
-                                disabled={!isConnected || chain?.id !== 11155111}
+                                disabled={!mounted}
                                 required
                             />
                         </div>
@@ -50,7 +59,7 @@ export default function FormView({
                                 placeholder="詳細描述您的活動..."
                                 rows={4}
                                 className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:border-blue-500 transition-colors resize-none"
-                                disabled={!isConnected || chain?.id !== 11155111}
+                                disabled={!mounted}
                                 required
                             />
                         </div>
@@ -65,7 +74,7 @@ export default function FormView({
                                 value={formData.category}
                                 onChange={handleInputChange}
                                 className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:border-blue-500 transition-colors"
-                                disabled={!isConnected || chain?.id !== 11155111}
+                                disabled={!mounted}
                             >
                                 <option value="technology">科技</option>
                                 <option value="music">音樂</option>
@@ -94,7 +103,7 @@ export default function FormView({
                                         accept="image/*"
                                         onChange={handleImageUpload}
                                         className="hidden"
-                                        disabled={!isConnected || chain?.id !== 11155111}
+                                        disabled={!mounted}
                                     />
                                 </label>
 
@@ -132,7 +141,7 @@ export default function FormView({
                                 value={formData.date}
                                 onChange={handleInputChange}
                                 className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:border-blue-500 transition-colors"
-                                disabled={!isConnected || chain?.id !== 11155111}
+                                disabled={!mounted}
                                 required
                             />
                         </div>
@@ -148,7 +157,7 @@ export default function FormView({
                                 value={formData.time}
                                 onChange={handleInputChange}
                                 className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:border-blue-500 transition-colors"
-                                disabled={!isConnected || chain?.id !== 11155111}
+                                disabled={!mounted}
                                 required
                             />
                         </div>
@@ -167,7 +176,7 @@ export default function FormView({
                                     onChange={handleInputChange}
                                     placeholder="例：台北市信義區市府路 1 號"
                                     className="w-full pl-12 pr-4 py-3 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:border-blue-500 transition-colors"
-                                    disabled={!isConnected || chain?.id !== 11155111}
+                                    disabled={!mounted}
                                     required
                                 />
                             </div>
@@ -199,7 +208,7 @@ export default function FormView({
                                     step="1"
                                     min="0"
                                     className="w-full pl-12 pr-4 py-3 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:border-blue-500 transition-colors"
-                                    disabled={!isConnected || chain?.id !== 11155111}
+                                    disabled={!mounted}
                                     required
                                 />
                             </div>
@@ -220,7 +229,7 @@ export default function FormView({
                                     placeholder="100"
                                     min="1"
                                     className="w-full pl-12 pr-4 py-3 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:border-blue-500 transition-colors"
-                                    disabled={!isConnected || chain?.id !== 11155111}
+                                    disabled={!mounted}
                                     required
                                 />
                             </div>
@@ -246,7 +255,7 @@ export default function FormView({
                     </button>
                     <button
                         type="submit"
-                        disabled={!isConnected || chain?.id !== 11155111 || isSubmitting}
+                        disabled={!mounted || isSubmitting}
                         className="flex-1 px-8 py-4 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-lg font-medium transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:from-blue-600 disabled:hover:to-purple-600"
                     >
                         {isSubmitting ? '處理中...' : '建立活動'}

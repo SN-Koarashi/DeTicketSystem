@@ -1,3 +1,5 @@
+"use client";
+
 import { CheckCircle } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import QRCode from "react-qr-code";

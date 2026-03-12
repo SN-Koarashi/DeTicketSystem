@@ -1,3 +1,5 @@
+"use client";
+
 import { Calendar, MapPin, Users, Tag } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';

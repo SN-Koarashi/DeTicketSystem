@@ -1,3 +1,5 @@
+"use client";
+
 import { FileText, Wallet, Upload, CheckCircle, Loader2, Pin } from 'lucide-react';
 
 export default function Modal({
