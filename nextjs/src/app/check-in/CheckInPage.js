@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useAccount } from 'wagmi';
 import { CheckCircle, XCircle, QrCode, Wallet } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
@@ -14,12 +14,119 @@ export default function CheckInPage() {
     const [ticketIdInput, setTicketIdInput] = useState(paymentId);
     const [isVerifying, setIsVerifying] = useState(false);
     const [txHash, setTxHash] = useState(null);
+    const [eventInfo, setEventInfo] = useState(null);
+    const [isLoadingEventInfo, setIsLoadingEventInfo] = useState(false);
 
     useEffect(() => {
         // 載入簽到歷史
         const history = JSON.parse(localStorage.getItem('checkInHistory') || '[]');
         setCheckInHistory(history);
     }, []);
+
+    // 從智慧合約獲取票券對應的活動資訊
+    const fetchEventInfo = useCallback(async (paymentId) => {
+        try {
+            setIsLoadingEventInfo(true);
+
+            // 使用 ethers.js 調用智慧合約
+            const { JsonRpcProvider, Contract } = await import('ethers');
+
+            // 從環境變數取得智慧合約地址
+            const contractAddress = process.env.NEXT_PUBLIC_SMART_CONTRACT_ADDRESS;
+
+            // 智慧合約 ABI - 新增的 getTicketEventInfo 函數
+            const contractABI = [
+                {
+                    "inputs": [
+                        { "internalType": "bytes32", "name": "paymentId", "type": "bytes32" }
+                    ],
+                    "name": "getTicketEventInfo",
+                    "outputs": [
+                        { "internalType": "bytes32", "name": "eventId", "type": "bytes32" },
+                        { "internalType": "string", "name": "cid", "type": "string" },
+                        { "internalType": "bool", "name": "exists", "type": "bool" }
+                    ],
+                    "stateMutability": "view",
+                    "type": "function"
+                }
+            ];
+
+            // 使用公開的 RPC provider（不需要錢包）
+            const provider = new JsonRpcProvider('https://ethereum-sepolia-rpc.publicnode.com');
+
+            // 創建合約實例
+            const contract = new Contract(contractAddress, contractABI, provider);
+
+            // 調用 getTicketEventInfo 獲取活動資訊
+            const [eventId, cid, exists] = await contract.getTicketEventInfo(paymentId);
+
+            if (!exists || !cid) {
+                setEventInfo(null);
+                return null;
+            }
+
+            // 從後端 API 或 IPFS 獲取活動詳情
+            try {
+                const response = await fetch('/api/v1/events');
+                const data = await response.json();
+
+                // 從所有活動中找到對應 CID 的活動
+                const event = data?.data?.find(e => e.cid === cid);
+
+                if (event) {
+                    const eventDetails = JSON.parse(event.summary);
+                    setEventInfo({
+                        eventId: eventId,
+                        cid: cid,
+                        name: eventDetails.name,
+                        date: eventDetails.date,
+                        time: eventDetails.time,
+                        location: eventDetails.location,
+                        category: eventDetails.category,
+                        organizer: eventDetails.organizer
+                    });
+                    return eventDetails;
+                }
+            } catch (error) {
+                console.error('獲取活動詳情失敗:', error);
+            }
+
+            // 如果從 API 獲取失敗，至少顯示 CID 和 eventId
+            setEventInfo({
+                eventId: eventId,
+                cid: cid,
+                name: '未知活動',
+                date: '-',
+                time: '-',
+                location: '-'
+            });
+
+            return { cid, eventId };
+
+        } catch (error) {
+            console.error('獲取活動資訊失敗:', error);
+            setEventInfo(null);
+            return null;
+        } finally {
+            setIsLoadingEventInfo(false);
+        }
+    }, []);
+
+    // 當付款識別碼改變時，自動獲取活動資訊
+    useEffect(() => {
+        const fetchInfo = async () => {
+            const inputValue = paymentId || ticketIdInput;
+            if (inputValue && inputValue.length === 66 && inputValue.startsWith('0x')) {
+                await fetchEventInfo(inputValue.trim());
+            } else {
+                setEventInfo(null);
+            }
+        };
+
+        // 使用 debounce 避免頻繁調用
+        const timeoutId = setTimeout(fetchInfo, 500);
+        return () => clearTimeout(timeoutId);
+    }, [ticketIdInput, paymentId, fetchEventInfo]);
 
     // 處理驗票成功
     const handleVerifySuccess = (ticketId, transactionHash) => {
@@ -116,6 +223,16 @@ export default function CheckInPage() {
             setIsVerifying(true);
             setCheckInResult(null);
 
+            // 首先獲取活動資訊
+            console.log('正在獲取活動資訊...');
+            const eventData = await fetchEventInfo(ticketIdInput.trim());
+
+            if (!eventData) {
+                throw new Error('無法找到對應的活動資訊，此票券可能不存在');
+            }
+
+            console.log('活動資訊:', eventData);
+
             // 使用 ethers.js 調用智慧合約（與購票頁面相同方式）
             const { BrowserProvider, Contract } = await import('ethers');
 
@@ -170,6 +287,7 @@ export default function CheckInPage() {
         } catch (err) {
             console.error('驗票錯誤:', err);
             handleVerifyError(err.message);
+            setIsVerifying(false);
         }
     };
 
@@ -221,6 +339,47 @@ export default function CheckInPage() {
                                     onKeyPress={(e) => e.key === 'Enter' && handleVerifyTicket()}
                                     disabled={!isConnected || isVerifying || paymentId.length > 0}
                                 />
+
+                                {/* 活動資訊卡片 */}
+                                {isLoadingEventInfo && (
+                                    <div className="p-4 bg-blue-900/20 border border-blue-500/50 rounded-lg">
+                                        <div className="flex items-center gap-3">
+                                            <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-500"></div>
+                                            <p className="text-blue-400 text-sm">正在獲取活動資訊...</p>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {eventInfo && !isLoadingEventInfo && (
+                                    <div className="p-4 bg-purple-900/20 border border-purple-500/50 rounded-lg">
+                                        <h3 className="text-lg font-bold text-purple-400 mb-2">活動資訊</h3>
+                                        <div className="space-y-1 text-sm">
+                                            <p className="text-gray-300">
+                                                <span className="text-gray-500">活動名稱：</span>
+                                                {eventInfo.name}
+                                            </p>
+                                            <p className="text-gray-300">
+                                                <span className="text-gray-500">日期時間：</span>
+                                                {eventInfo.date} {eventInfo.time}
+                                            </p>
+                                            <p className="text-gray-300">
+                                                <span className="text-gray-500">地點：</span>
+                                                {eventInfo.location}
+                                            </p>
+                                            {eventInfo.category && (
+                                                <p className="text-gray-300">
+                                                    <span className="text-gray-500">分類：</span>
+                                                    {eventInfo.category}
+                                                </p>
+                                            )}
+                                            <p className="text-gray-400 text-xs break-all mt-2">
+                                                <span className="text-gray-500">CID：</span>
+                                                {eventInfo.cid}
+                                            </p>
+                                        </div>
+                                    </div>
+                                )}
+
                                 <button
                                     onClick={handleVerifyTicket}
                                     disabled={!isConnected || isVerifying || !ticketIdInput.trim()}

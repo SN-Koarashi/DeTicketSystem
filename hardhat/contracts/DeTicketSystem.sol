@@ -27,6 +27,12 @@ contract DeTicketSystem is ReentrancyGuard {
     // 活動識別碼 => 活動資訊
     mapping(bytes32 => EventInfo) public events;
 
+    // 活動識別碼 => IPFS CID
+    mapping(bytes32 => string) public eventCID;
+
+    // 付款識別碼 => 活動識別碼
+    mapping(bytes32 => bytes32) public ticketEventId;
+
     // 付款識別碼 => 使用時間戳 (0表示未使用)
     mapping(bytes32 => uint256) public ticketUsageTimestamp;
 
@@ -96,6 +102,9 @@ contract DeTicketSystem is ReentrancyGuard {
             exists: true
         });
 
+        // 儲存活動的 CID
+        eventCID[eventId] = cid;
+
         emit EventCreated(
             eventId,
             cid,
@@ -150,6 +159,9 @@ contract DeTicketSystem is ReentrancyGuard {
 
         // 記錄票券擁有者
         ticketOwner[paymentId] = msg.sender;
+
+        // 記錄票券所屬的活動
+        ticketEventId[paymentId] = eventId;
 
         // 計算分帳金額
         uint256 ownerShare = (requiredETH * 25) / 100; // 25% 給合約建立者
@@ -279,5 +291,26 @@ contract DeTicketSystem is ReentrancyGuard {
     ) external view returns (bool isUsed, uint256 usedTimestamp) {
         uint256 timestamp = ticketUsageTimestamp[paymentId];
         return (timestamp > 0, timestamp);
+    }
+
+    /**
+     * @dev 查詢票券對應的活動資訊
+     * @param paymentId 付款識別碼
+     * @return eventId 活動識別碼
+     * @return cid IPFS CID
+     * @return exists 票券是否存在
+     */
+    function getTicketEventInfo(
+        bytes32 paymentId
+    ) external view returns (bytes32 eventId, string memory cid, bool exists) {
+        eventId = ticketEventId[paymentId];
+        if (eventId != bytes32(0)) {
+            cid = eventCID[eventId];
+            exists = true;
+        } else {
+            cid = "";
+            exists = false;
+        }
+        return (eventId, cid, exists);
     }
 }
