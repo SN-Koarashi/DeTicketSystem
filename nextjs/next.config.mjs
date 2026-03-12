@@ -13,7 +13,8 @@ const nextConfig = {
     devIndicators: { position: "bottom-left" },
     env: {
         NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID: "732dbd3ba5be9978067e2c1318e5cad7",
-        NEXT_PUBLIC_SMART_CONTRACT_ADDRESS: "0x6a8aF280e77eb5870217c224f9277ed9Df41260E"
+        NEXT_PUBLIC_SMART_CONTRACT_ADDRESS: "0xd1F18026D215b58ceA0A87449161134762aCC019",
+        NEXT_PUBLIC_GITHUB_REPO: "https://github.com/SN-Koarashi/DeTicketSystem"
     },
     rewrites: async function () {
         if (process.env.NODE_ENV === 'production') {
