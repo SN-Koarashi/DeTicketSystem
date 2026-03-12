@@ -1,3 +1,5 @@
+"use client";
+
 export default function CheckInSkeleton() {
     return (
         <div className="container mx-auto px-4 py-10">

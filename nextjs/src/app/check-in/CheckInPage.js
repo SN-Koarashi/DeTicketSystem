@@ -4,6 +4,8 @@ import { useState, useEffect, useCallback } from 'react';
 import { useAccount } from 'wagmi';
 import { CheckCircle, XCircle, QrCode, Wallet } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
+import { categories, formatDate, formatTime } from '@/lib/utils';
+import Link from 'next/link';
 
 export default function CheckInPage() {
     const searchParams = useSearchParams();
@@ -79,8 +81,7 @@ export default function CheckInPage() {
                         eventId: eventId,
                         cid: cid,
                         name: eventDetails.name,
-                        date: eventDetails.date,
-                        time: eventDetails.time,
+                        heldAt: eventDetails.heldAt,
                         location: eventDetails.location,
                         category: eventDetails.category,
                         organizer: eventDetails.organizer
@@ -96,8 +97,7 @@ export default function CheckInPage() {
                 eventId: eventId,
                 cid: cid,
                 name: '未知活動',
-                date: '-',
-                time: '-',
+                heldAt: '-',
                 location: '-'
             });
 
@@ -359,8 +359,8 @@ export default function CheckInPage() {
                                                 {eventInfo.name}
                                             </p>
                                             <p className="text-gray-300">
-                                                <span className="text-gray-500">日期時間：</span>
-                                                {eventInfo.date} {eventInfo.time}
+                                                <span className="text-gray-500">舉辦時間：</span>
+                                                {formatDate(eventInfo.heldAt)} {formatTime(eventInfo.heldAt)}
                                             </p>
                                             <p className="text-gray-300">
                                                 <span className="text-gray-500">地點：</span>
@@ -369,12 +369,12 @@ export default function CheckInPage() {
                                             {eventInfo.category && (
                                                 <p className="text-gray-300">
                                                     <span className="text-gray-500">分類：</span>
-                                                    {eventInfo.category}
+                                                    {categories[eventInfo.category]}
                                                 </p>
                                             )}
                                             <p className="text-gray-400 text-xs break-all mt-2">
                                                 <span className="text-gray-500">CID：</span>
-                                                {eventInfo.cid}
+                                                <Link href={`/events/${eventInfo.cid}`}>{eventInfo.cid}</Link>
                                             </p>
                                         </div>
                                     </div>
