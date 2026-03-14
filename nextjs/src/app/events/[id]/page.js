@@ -550,7 +550,6 @@ export default function EventDetailPage() {
                                     {/* 說明文字 */}
                                     <div className="text-sm text-gray-400 space-y-1">
                                         <p>✓ 購買前會驗證鏈上數據</p>
-                                        <p>✓ 票券以 NFT 形式發行</p>
                                         <p>✓ 不可轉售或轉移</p>
                                         <p>✓ 區塊鏈存證，防偽造</p>
                                     </div>
