@@ -253,10 +253,14 @@ app.delete('/delete/:cid', async (c) => {
             }
         }
 
+        const rawBlockstore = typeof helia.blockstore.unwrap === 'function'
+            ? helia.blockstore.unwrap()
+            : helia.blockstore;
+
         let deletedBlocks = 0;
         try {
             for await (const entry of unixfsRecursive(cid, helia.blockstore)) {
-                await helia.blockstore.delete(entry.cid);
+                await rawBlockstore.delete(entry.cid);
                 deletedBlocks += 1;
             }
         } catch (error) {
@@ -268,9 +272,11 @@ app.delete('/delete/:cid', async (c) => {
                 }, 404);
             }
 
-            await helia.blockstore.delete(cid);
+            await rawBlockstore.delete(cid);
             deletedBlocks = 1;
         }
+
+        helia.gc(); // 觸發垃圾回收，清理未 pin 的區塊
 
         console.log('🗑️  已刪除資料區塊，CID:', cidString, 'blocks:', deletedBlocks);
 
