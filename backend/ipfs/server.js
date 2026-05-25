@@ -15,7 +15,7 @@ import { createHelia } from 'helia';
 import { unixfs } from '@helia/unixfs';
 import { FsBlockstore } from 'blockstore-fs';
 import { FsDatastore } from 'datastore-fs';
-import { walk } from 'ipfs-unixfs-exporter';
+import { recursive as unixfsRecursive } from 'ipfs-unixfs-exporter';
 
 const app = new Hono();
 const PORT = process.env.PORT || 3001;
@@ -255,7 +255,7 @@ app.delete('/delete/:cid', async (c) => {
 
         let deletedBlocks = 0;
         try {
-            for await (const entry of walk(cid, helia.blockstore)) {
+            for await (const entry of unixfsRecursive(cid, helia.blockstore)) {
                 await helia.blockstore.delete(entry.cid);
                 deletedBlocks += 1;
             }
