@@ -1,3 +1,13 @@
+import fsExtra from 'fs';
+import path from 'path';
+
+const dataDir = path.join(process.cwd(), 'data');
+const blocksDir = path.join(dataDir, 'blocks');
+const datastoreDir = path.join(dataDir, 'datastore');
+
+// 確保資料目錄存在
+fsExtra.mkdirSync(blocksDir, { recursive: true });
+fsExtra.mkdirSync(datastoreDir, { recursive: true });
 import { Hono } from 'hono';
 import { serve } from '@hono/node-server';
 import { cors } from 'hono/cors';
@@ -5,6 +15,7 @@ import { createHelia } from 'helia';
 import { unixfs } from '@helia/unixfs';
 import { FsBlockstore } from 'blockstore-fs';
 import { FsDatastore } from 'datastore-fs';
+import { walk } from 'ipfs-unixfs-exporter';
 
 const app = new Hono();
 const PORT = process.env.PORT || 3001;
@@ -84,22 +95,27 @@ app.get('/pins', async (c) => {
     }
 });
 
-// 上傳 JSON 數據到 IPFS（支援兩階段提交）
+// 上傳二進位檔案到 IPFS（multipart/form-data，支援兩階段提交）
 app.post('/upload', async (c) => {
     try {
-        const jsonData = await c.req.json();
-
-        // 驗證輸入
-        if (!jsonData || typeof jsonData !== 'object') {
+        const contentType = c.req.header('content-type') || '';
+        if (!contentType.includes('multipart/form-data')) {
             return c.json({
-                error: '無效的輸入格式，需要 JSON 物件'
+                error: '無效的輸入格式，需要 multipart/form-data'
             }, 400);
         }
 
-        // 將 JSON 轉換為字串
-        const jsonString = JSON.stringify(jsonData);
-        const encoder = new TextEncoder();
-        const bytes = encoder.encode(jsonString);
+        const formData = await c.req.formData();
+        const file = formData.get('file');
+
+        if (!(file instanceof File)) {
+            return c.json({
+                error: '缺少檔案欄位 file'
+            }, 400);
+        }
+
+        const arrayBuffer = await file.arrayBuffer();
+        const bytes = new Uint8Array(arrayBuffer);
 
         // 存入 IPFS（暫存，不立即 pin）
         // 注意：即使不 pin，區塊也會被寫入 blockstore
@@ -107,7 +123,7 @@ app.post('/upload', async (c) => {
             pin: false
         });
 
-        console.log('✅ 數據已暫存到 IPFS（未 pin），CID:', cid.toString());
+        console.log('✅ 檔案已暫存到 IPFS（未 pin），CID:', cid.toString());
         console.log('⚠️  請記得在交易成功後呼叫 /pin/:cid 來持久化資料');
 
         return c.json({
@@ -115,7 +131,9 @@ app.post('/upload', async (c) => {
             cid: cid.toString(),
             size: bytes.length,
             pinned: false,
-            message: '資料已暫存，請在交易成功後 pin'
+            filename: file.name || null,
+            contentType: file.type || 'application/octet-stream',
+            message: '檔案已暫存，請在交易成功後 pin'
         });
     } catch (error) {
         console.error('❌ 上傳失敗:', error);
@@ -212,6 +230,65 @@ app.delete('/pin/:cid', async (c) => {
     }
 });
 
+// 刪除資料（實際移除本地 blockstore 內的區塊）
+app.delete('/delete/:cid', async (c) => {
+    try {
+        const cidString = c.req.param('cid');
+
+        if (!cidString) {
+            return c.json({
+                error: '缺少 CID 參數'
+            }, 400);
+        }
+
+        const { CID } = await import('multiformats/cid');
+        const cid = CID.parse(cidString);
+
+        // 若有 pin，先嘗試移除（忽略未 pin 的情況）
+        try {
+            await helia.pins.rm(cid);
+        } catch (error) {
+            if (!String(error?.message || '').includes('not pinned')) {
+                console.warn('⚠️  移除 pin 失敗（可能未 pin）:', error.message || error);
+            }
+        }
+
+        let deletedBlocks = 0;
+        try {
+            for await (const entry of walk(cid, helia.blockstore)) {
+                await helia.blockstore.delete(entry.cid);
+                deletedBlocks += 1;
+            }
+        } catch (error) {
+            // 若不是 UnixFS DAG，至少嘗試刪除根區塊
+            if (String(error?.message || '').includes('not found') || String(error?.message || '').includes('no block')) {
+                return c.json({
+                    error: '找不到指定的 CID',
+                    message: '該 CID 不存在或尚未同步'
+                }, 404);
+            }
+
+            await helia.blockstore.delete(cid);
+            deletedBlocks = 1;
+        }
+
+        console.log('🗑️  已刪除資料區塊，CID:', cidString, 'blocks:', deletedBlocks);
+
+        return c.json({
+            success: true,
+            cid: cidString,
+            deletedBlocks,
+            message: '資料已從本地 IPFS blockstore 移除'
+        });
+    } catch (error) {
+        console.error('❌ 刪除失敗:', error);
+        return c.json({
+            error: '刪除失敗',
+            message: error.message
+        }, 500);
+    }
+});
+
 // 從 IPFS 獲取數據
 app.get('/data/:cid', async (c) => {
     try {
@@ -252,6 +329,45 @@ app.get('/data/:cid', async (c) => {
     }
 });
 
+// 下載二進位檔案
+app.get('/download/:cid', async (c) => {
+    try {
+        const cid = c.req.param('cid');
+
+        if (!cid) {
+            return c.json({
+                error: '缺少 CID 參數'
+            }, 400);
+        }
+
+        const url = new URL(c.req.url);
+        const filename = url.searchParams.get('filename') || cid;
+        const contentType = url.searchParams.get('contentType') || 'application/octet-stream';
+
+        const bytes = await catBytesWithTimeout(cid, 5000);
+
+        const safeFilename = filename.replace(/["]+/g, '_');
+        c.header('Content-Type', contentType);
+        c.header('Content-Disposition', `attachment; filename="${safeFilename}"`);
+
+        return c.body(bytes);
+    } catch (error) {
+        console.error('❌ 下載失敗:', error);
+
+        if (error.message.includes('no block') || error.message.includes('NOT FOUND')) {
+            return c.json({
+                error: '找不到指定的 CID',
+                message: '該 CID 不存在或尚未同步'
+            }, 404);
+        }
+
+        return c.json({
+            error: '下載失敗',
+            message: error.message
+        }, 500);
+    }
+});
+
 // 封裝一個帶 timeout 的 cat
 async function catWithTimeout(cid, timeoutMs = 5000) {
     return new Promise(async (resolve, reject) => {
@@ -276,6 +392,39 @@ async function catWithTimeout(cid, timeoutMs = 5000) {
     });
 }
 
+async function catBytesWithTimeout(cid, timeoutMs = 5000) {
+    return new Promise(async (resolve, reject) => {
+        let timer = setTimeout(() => reject(new Error('NOT FOUND')), timeoutMs);
+
+        try {
+            const chunks = [];
+            let totalLength = 0;
+
+            for await (const chunk of fs.cat(cid)) {
+                chunks.push(chunk);
+                totalLength += chunk.length;
+
+                clearTimeout(timer);
+                timer = setTimeout(() => reject(new Error('NOT FOUND')), timeoutMs);
+            }
+
+            clearTimeout(timer);
+
+            const bytes = new Uint8Array(totalLength);
+            let offset = 0;
+            for (const chunk of chunks) {
+                bytes.set(chunk, offset);
+                offset += chunk.length;
+            }
+
+            resolve(bytes);
+        } catch (err) {
+            clearTimeout(timer);
+            reject(err);
+        }
+    });
+}
+
 // 啟動伺服器
 async function startServer() {
     await initHelia();
@@ -287,11 +436,13 @@ async function startServer() {
 
     console.log(`🚀 IPFS 伺服器運行在 http://localhost:${PORT}`);
     console.log(`📝 API 端點:`);
-    console.log(`   - POST   /upload        - 上傳 JSON 數據（暫存）`);
+    console.log(`   - POST   /upload        - 上傳檔案（multipart/form-data，暫存）`);
     console.log(`   - POST   /pin/:cid     - Pin 資料（持久化）`);
     console.log(`   - DELETE /pin/:cid     - Unpin 資料（清理）`);
+    console.log(`   - DELETE /delete/:cid  - 刪除資料（移除區塊）`);
     console.log(`   - GET    /pins         - 列出所有 PIN 的資料`);
     console.log(`   - GET    /data/:cid    - 獲取數據`);
+    console.log(`   - GET    /download/:cid - 下載檔案`);
     console.log(`   - GET    /health       - 健康檢查`);
 }
 
